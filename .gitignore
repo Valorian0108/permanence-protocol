@@ -35,3 +35,9 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Old directories
+frontend/
+old_frontend/
+frontend-old/
+package-lock.json.backup

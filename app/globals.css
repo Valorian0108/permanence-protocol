@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Typography */
+  --font-display: 'Spectral', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Typography Scale */
+  --text-display-xl: clamp(2.5rem, 5vw, 4.5rem);
+  --text-display-lg: clamp(2rem, 4vw, 3rem);
+  --text-display-md: clamp(1.5rem, 3vw, 2rem);
+  --text-body-lg: clamp(1.125rem, 2vw, 1.25rem);
+  --text-body: clamp(1rem, 2vw, 1.125rem);
+  --text-body-sm: clamp(0.875rem, 1.5vw, 1rem);
+  --text-mono: 0.875rem;
+
+  /* Leading */
+  --leading-display: 1.1;
+  --leading-body: 1.6;
+  --leading-tight: 1.3;
+
+  /* Measure */
+  --measure-body: 65ch;
+  --measure-wide: 80ch;
+
+  /* Colors - Archival Palette */
+  --color-ink: #1a1a1a;
+  --color-ink-light: #4a4a4a;
+  --color-ink-lighter: #8a8a8a;
+  --color-paper: #faf9f7;
+  --color-paper-dark: #f5f4f2;
+  --color-accent: #2c2c2c;
+  --color-accent-light: #5c5c5c;
+  --color-border: #e0e0e0;
+  --color-border-light: #f0f0f0;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  /* Transitions */
+  --transition-fast: 150ms ease-out;
+  --transition-base: 250ms ease-out;
+  --transition-slow: 400ms ease-out;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+  background-color: var(--color-paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: var(--leading-display);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+h1 {
+  font-size: var(--text-display-xl);
+}
+
+h2 {
+  font-size: var(--text-display-lg);
+}
+
+h3 {
+  font-size: var(--text-display-md);
+}
+
+code, pre, .mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+}
+
+.archive-ink {
+  color: var(--color-ink);
+}
+
+.archive-ink-light {
+  color: var(--color-ink-light);
+}
+
+.archive-ink-lighter {
+  color: var(--color-ink-lighter);
+}
+
+.archive-paper {
+  background-color: var(--color-paper);
+}
+
+.archive-paper-dark {
+  background-color: var(--color-paper-dark);
+}
+
+.archive-border {
+  border-color: var(--color-border);
+}
+
+.archive-display {
+  font-family: var(--font-display);
+}
+
+.archive-mono {
+  font-family: var(--font-mono);
+}

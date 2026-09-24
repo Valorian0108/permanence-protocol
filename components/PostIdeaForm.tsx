@@ -1,18 +1,36 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '../app/providers';
+import { useState, useEffect } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
 import { postIdea } from '../lib/backend';
 import { insertIdea, checkDuplicateHash } from '../lib/supabase';
 
 export default function PostIdeaForm() {
+  const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
   const [content, setContent] = useState('');
   const [contentHash, setContentHash] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState(false);
-  const { walletAddress } = useAuth();
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const { authenticated, user } = usePrivy();
+
+  useEffect(() => {
+    if (authenticated && user) {
+      const wallet = user.linkedAccounts.find((account: any) => 
+        account.type === 'wallet' || account.type === 'smart_wallet'
+      ) as any;
+      if (wallet && wallet.address) {
+        setWalletAddress(wallet.address);
+      }
+    }
+  }, [authenticated, user]);
+
+  // If Privy is not configured, don't render the form
+  if (!privyAppId) {
+    return null;
+  }
 
   // Compute SHA-256 hash in real-time
   const computeHash = async (text: string) => {

@@ -7,7 +7,8 @@ import PostIdeaForm from '../components/PostIdeaForm';
 import LandingAnimation from '../components/LandingAnimation';
 
 export default function Home() {
-  const { ready, authenticated, login, logout } = usePrivy();
+  const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+  const { ready, authenticated, login, logout, user } = usePrivy();
   const [showLanding, setShowLanding] = useState(true);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -17,12 +18,40 @@ export default function Home() {
 
   // Get wallet address when authenticated
   useEffect(() => {
-    if (authenticated && !walletAddress) {
-      // For now, we'll use the backend signer address since we're using that for transactions
-      // In production, this would be the user's Privy embedded wallet address
-      setWalletAddress('0x87a3724BC07126751A7B6f30D90D5E8C07107863');
+    if (authenticated && user) {
+      const wallet = user.linkedAccounts.find((account: any) => 
+        account.type === 'wallet' || account.type === 'smart_wallet'
+      ) as any;
+      if (wallet && wallet.address) {
+        setWalletAddress(wallet.address);
+      }
     }
-  }, [authenticated, walletAddress]);
+  }, [authenticated, user]);
+
+  // If Privy is not configured, show simple placeholder UI
+  if (!privyAppId) {
+    return (
+      <div className="min-h-screen archive-paper">
+        <header className="border-b archive-border bg-white">
+          <div className="max-w-4xl mx-auto px-6 py-4">
+            <h1 className="text-2xl font-semibold archive-display archive-ink">
+              Permanence Protocol
+            </h1>
+          </div>
+        </header>
+        <main className="max-w-4xl mx-auto px-6 py-8">
+          <div className="text-center py-16">
+            <h2 className="text-3xl archive-display archive-ink mb-4">
+              Configure Environment Variables
+            </h2>
+            <p className="text-lg archive-ink-light mb-8">
+              Please configure NEXT_PUBLIC_PRIVY_APP_ID to enable authentication.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (!ready) {
     return (

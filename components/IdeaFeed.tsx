@@ -5,8 +5,14 @@ import { getIdeas, getResponsesByIdeaId, Idea, Response } from '../lib/supabase'
 import PostResponseForm from './PostResponseForm';
 
 export default function IdeaFeed() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // If Supabase is not configured, don't render the feed
+  if (!supabaseUrl) {
+    return null;
+  }
 
   useEffect(() => {
     fetchIdeas();
