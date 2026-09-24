@@ -1,6 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.privy.io https://*.privyusercontent.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.privy.io https://*.privyusercontent.com;"
+          }
+        ]
+      }
+    ]
+  },
   webpack: (config) => {
     // Exclude Solana peer dependencies since we only use Ethereum
     config.externals = config.externals || {};
