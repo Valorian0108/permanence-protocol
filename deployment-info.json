@@ -1,0 +1,49 @@
+{
+  "network": "arbitrumSepolia",
+  "address": "0x213B5321d98B2E01204C827712Ca9D580cEF9bEd",
+  "deployer": "0x87a3724BC07126751A7B6f30D90D5E8C07107863",
+  "deploymentHash": "0x5501b0e72a3c4ededa708438e335e68bbad0170cfdfa2d6d1596eebe1eed99a2",
+  "timestamp": "2026-09-23T13:57:50.581Z",
+  "verified": true,
+  "verificationUrl": "https://sepolia.arbiscan.io/address/0x213B5321d98B2E01204C827712Ca9D580cEF9bEd#code",
+  "backendSigner": {
+    "address": "0x87a3724BC07126751A7B6f30D90D5E8C07107863",
+    "apiPort": 3001,
+    "endpoints": {
+      "health": "/health",
+      "balance": "/balance",
+      "postIdea": "/api/post-idea",
+      "postResponse": "/api/post-response"
+    },
+    "testTransactions": {
+      "idea": {
+        "transactionHash": "0x47e22744adb8deb3da8cb7dd82e8afc84bf823d06430c3be957b4d422c7d44aa",
+        "ideaId": "3"
+      },
+      "response": {
+        "transactionHash": "0x6b550d3b1cdca6342b3b34a950d6aa431d855729dd395386fd0990098dba5463",
+        "responseId": "1"
+      }
+    }
+  },
+  "database": {
+    "supabaseUrl": "https://olmyzaomyafzdjzgplwk.supabase.co",
+    "schemaDeployed": true,
+    "tables": {
+      "ideas": {
+        "columns": ["id", "content_hash", "content", "submitter_wallet_address", "onchain_idea_id", "transaction_hash", "block_number", "timestamp"],
+        "constraints": ["PRIMARY KEY", "UNIQUE content_hash", "NOT NULL constraints"]
+      },
+      "responses": {
+        "columns": ["id", "idea_id", "content_hash", "content", "response_type", "submitter_wallet_address", "onchain_response_id", "transaction_hash", "block_number", "timestamp"],
+        "constraints": ["PRIMARY KEY", "FOREIGN KEY idea_id", "CHECK response_type", "NOT NULL constraints"]
+      }
+    },
+    "indexes": ["idx_ideas_timestamp", "idx_ideas_content_hash", "idx_ideas_submitter", "idx_responses_idea_id", "idx_responses_timestamp", "idx_responses_submitter"],
+    "rlsPolicies": ["Allow public read access", "Allow insert", "Prevent updates", "Prevent deletes (permanence enforcement)"],
+    "testData": {
+      "ideaId": "7f95b188-baf3-47ea-9dde-79a9e2a73d67",
+      "responseId": "c7a0acaf-f76c-42f7-8c6d-08efcf6786f1"
+    }
+  }
+}

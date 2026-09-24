@@ -1,0 +1,38 @@
+{
+  "name": "permanence-protocol-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@farcaster/mini-app-solana": "^2.0.0",
+    "@farcaster/miniapp-sdk": "^0.3.0",
+    "@privy-io/react-auth": "^3.45.0",
+    "@solana-program/memo": "^0.15.0",
+    "@solana-program/system": "^0.15.0",
+    "@solana-program/token": "^0.17.0",
+    "@solana/kit": "^8.3.0",
+    "@solana/wallet-adapter-react": "^0.15.40",
+    "@stripe/stripe-js": "^9.17.0",
+    "@supabase/supabase-js": "^2.117.1",
+    "gsap": "^3.15.0",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.0.0"
+  }
+}

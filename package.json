@@ -1,0 +1,31 @@
+{
+  "name": "permanence-protocol",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "backend": "node backend/api.js",
+    "start": "node backend/api.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "hardhat": "^2.29.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "keccak@3.0.4": true,
+    "secp256k1@4.0.5": true
+  },
+  "dependencies": {
+    "@privy-io/react-auth": "^3.45.0",
+    "@supabase/supabase-js": "^2.117.1",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.3",
+    "ethers": "^6.17.0",
+    "express": "^5.2.1"
+  }
+}

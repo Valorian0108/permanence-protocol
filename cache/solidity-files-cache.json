@@ -1,0 +1,40 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\USER\\permanence-protocol\\contracts\\PermanenceProtocol.sol": {
+      "lastModificationDate": 1790166331341,
+      "contentHash": "50f66d8064790deca6ee54ee127b1fb2",
+      "sourceName": "contracts/PermanenceProtocol.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "PermanenceProtocol"
+      ]
+    }
+  }
+}
