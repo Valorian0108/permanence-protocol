@@ -5,6 +5,10 @@ import { PrivyProvider } from '@privy-io/react-auth';
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  // TEMPORARILY DISABLE PRIVY FOR DEBUGGING
+  // If no Privy app ID is configured, just render children without Privy
+  return <>{children}</>;
+
   // If no Privy app ID is configured, just render children without Privy
   if (!privyAppId) {
     return <>{children}</>;
