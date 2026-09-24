@@ -1,8 +1,9 @@
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
+// Use relative path for same-origin API calls (works in both dev and production)
+const API_BASE = '';
 
 export async function postIdea(contentHash: string) {
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/post-idea`, {
+    const response = await fetch(`${API_BASE}/api/post-idea`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,7 +25,7 @@ export async function postIdea(contentHash: string) {
 
 export async function postResponse(ideaId: string, contentHash: string, responseType: number) {
   try {
-    const response = await fetch(`${BACKEND_API_URL}/api/post-response`, {
+    const response = await fetch(`${API_BASE}/api/post-response`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
