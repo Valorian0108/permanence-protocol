@@ -14,6 +14,12 @@ Online posts can be difficult to find again, and a claim about who said somethin
 
 This is an early prototype, not a solution to priority or authorship disputes. The chain can help check whether recovered text matches a recorded hash, but it cannot recreate missing text or prove that a contributor was the first person to think of an idea. I built this to explore the possibility, and to learn what a useful, honest archive needs to become.
 
+## Why Arbitrum
+
+I had been wanting to build something in the Arbitrum ecosystem and get hands-on experience with its technology. Permanence Protocol gave me a practical reason to do that: recording an idea's hash on-chain and seeing how quickly the record can be confirmed. Arbitrum's speed made it feel like a natural fit for a project where each post and response creates a small record.
+
+The current app is deployed on Arbitrum Sepolia, so this is a testnet prototype, not a production deployment or a claim of guaranteed permanence. The project could be adapted to other networks, but Arbitrum is where I chose to build and test it.
+
 ## How a record works
 
 ```mermaid
