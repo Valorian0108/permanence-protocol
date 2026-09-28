@@ -144,4 +144,4 @@ Issues and thoughtful contributions are welcome. Please keep the project's centr
 
 ## License
 
-No license has been added yet. Unless a license is added, the repository is not explicitly licensed for reuse. Add a license file before inviting others to reuse or redistribute the code.
+This project is licensed under the [MIT License](./LICENSE).
