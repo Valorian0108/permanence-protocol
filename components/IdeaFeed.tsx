@@ -214,15 +214,11 @@ function IdeaCard({
   const shortWallet = formatWalletId(idea.submitter_wallet_address);
 
   return (
-    <article className="archive-entry">
-      <div className="archive-entry-meta">
-        <span className="archive-entry-number archive-mono">{String(index + 1).padStart(2, '0')}</span>
-        <span className="archive-entry-type">Idea</span>
-        <span className="archive-wallet-id archive-mono" aria-label={`Posted by wallet ${shortWallet}`} title="Pseudonymous wallet identifier">by {shortWallet}</span>
-        <span className="archive-entry-response-count archive-mono" aria-label={`${responseCount} ${responseCount === 1 ? 'response' : 'responses'}`}>
-          {responseCount} {responseCount === 1 ? 'response' : 'responses'}
-        </span>
-        <time className="archive-entry-date" dateTime={idea.timestamp}>{new Date(idea.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+      <article className="archive-entry">
+        <div className="archive-entry-meta">
+          <span className="archive-entry-number archive-mono">{String(index + 1).padStart(2, '0')}</span>
+          <span className="archive-wallet-id archive-mono" aria-label={`Posted by wallet ${shortWallet}`} title="Pseudonymous wallet identifier">by {shortWallet}</span>
+          <time className="archive-entry-date" dateTime={idea.timestamp}>{new Date(idea.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
       </div>
 
       <p className="archive-entry-content">{idea.content}</p>
@@ -234,7 +230,7 @@ function IdeaCard({
           aria-expanded={showResponses}
           className="archive-text-button"
         >
-          {showResponses ? 'Close conversation' : 'Read the conversation'}
+          {showResponses ? 'Close conversation' : `Conversation · ${responseCount}`}
         </button>
         <button
           type="button"
@@ -303,16 +299,19 @@ function IdeaCard({
                 <time dateTime={response.timestamp}>{new Date(response.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</time>
               </div>
               <p>{response.content}</p>
-              <div className="archive-response-record">
-                <code>{response.content_hash.slice(0, 12)}…</code>
-                <a href={`https://sepolia.arbiscan.io/tx/${response.transaction_hash}`} target="_blank" rel="noopener noreferrer">View transaction <span aria-hidden="true">↗</span></a>
-              </div>
-              <HashVerification
-                content={response.content}
-                expectedHash={response.content_hash}
-                kind="response"
-                onchainId={response.onchain_response_id}
-              />
+              <details className="archive-response-record-disclosure">
+                <summary>Inspect response record</summary>
+                <div className="archive-response-record">
+                  <code>{response.content_hash.slice(0, 12)}…</code>
+                  <a href={`https://sepolia.arbiscan.io/tx/${response.transaction_hash}`} target="_blank" rel="noopener noreferrer">View transaction <span aria-hidden="true">↗</span></a>
+                </div>
+                <HashVerification
+                  content={response.content}
+                  expectedHash={response.content_hash}
+                  kind="response"
+                  onchainId={response.onchain_response_id}
+                />
+              </details>
             </article>
           ))}
           {!showResponseForm && canPost && (

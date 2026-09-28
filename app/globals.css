@@ -200,6 +200,145 @@ body {
   display: none;
 }
 
+.landing-intro {
+  touch-action: manipulation;
+  background: #171714;
+}
+
+.landing-intro-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(247 245 240 / 3%) 1px, transparent 1px);
+  background-size: 50% 100%;
+}
+
+.landing-intro-content {
+  min-height: min(100svh, 860px);
+  justify-content: space-between;
+  padding-block: clamp(30px, 7vh, 72px);
+}
+
+.landing-intro-topline {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 18px;
+  color: rgb(255 255 255 / 38%);
+  font-size: 9px;
+  letter-spacing: .14em;
+}
+
+.landing-intro-copy {
+  width: 100%;
+  margin-block: auto;
+  padding-block: 56px;
+}
+
+.landing-intro-copy h1 {
+  margin: 0 auto;
+  color: #faf9f7;
+  font: 400 clamp(2.5rem, 8vw, 6.4rem)/1.04 var(--font-display);
+  letter-spacing: -.045em;
+}
+
+.landing-intro-detail {
+  max-width: 38rem;
+  margin: 24px auto 0;
+  color: rgb(250 249 247 / 60%);
+  font-size: clamp(13px, 2vw, 16px);
+  line-height: 1.7;
+}
+
+.landing-intro-controls {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.landing-intro-progress {
+  display: flex;
+  gap: 7px;
+}
+
+.landing-intro-progress span {
+  width: 34px;
+  height: 2px;
+  background: rgb(255 255 255 / 18%);
+  transition: background-color var(--transition-base), transform var(--transition-base);
+}
+
+.landing-intro-progress span.is-current {
+  transform: scaleY(1.5);
+  background: var(--color-reading-accent);
+}
+
+.landing-intro-progress span.is-complete {
+  background: rgb(193 122 95 / 55%);
+}
+
+.landing-intro-hint {
+  margin: 0;
+  color: rgb(255 255 255 / 40%);
+  font-size: 9px;
+  letter-spacing: .14em;
+}
+
+.landing-intro-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.landing-intro-continue,
+.landing-intro-back,
+.landing-intro-skip {
+  min-height: 46px;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.landing-intro-continue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 0 20px;
+  border: 1px solid rgb(255 255 255 / 65%);
+  color: #fff;
+  background: transparent;
+}
+
+.landing-intro-continue:hover {
+  border-color: var(--color-reading-accent);
+  background: var(--color-reading-accent);
+}
+
+.landing-intro-back,
+.landing-intro-skip {
+  padding-inline: 8px;
+  border: 1px solid transparent;
+  color: rgb(255 255 255 / 58%);
+  background: transparent;
+}
+
+.landing-intro-back:hover,
+.landing-intro-skip:hover {
+  color: #fff;
+}
+
+.landing-intro :is(button):focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
 .archive-shell {
   width: min(100%, 1160px);
   margin-inline: auto;
@@ -739,6 +878,10 @@ body {
   color: var(--color-ink-light);
 }
 
+.archive-entry-meta .archive-entry-response-count {
+  margin-left: auto;
+}
+
 .archive-wallet-id {
   color: var(--color-ink-lighter);
   font-size: 9px;
@@ -921,6 +1064,29 @@ body {
   align-items: center;
   gap: 8px 16px;
   margin-top: 10px;
+}
+
+.archive-response-record-disclosure {
+  margin-top: 11px;
+}
+
+.archive-response-record-disclosure summary {
+  width: fit-content;
+  color: var(--color-ink-lighter);
+  cursor: pointer;
+  font-size: 10px;
+  list-style-position: inside;
+  text-decoration: underline;
+  text-decoration-color: var(--color-border);
+  text-underline-offset: 3px;
+}
+
+.archive-response-record-disclosure summary:hover {
+  color: var(--color-reading-accent);
+}
+
+.archive-response-record-disclosure .archive-response-record {
+  margin-top: 9px;
 }
 
 .archive-response .mt-2.flex {
@@ -1143,6 +1309,10 @@ body {
   .archive-entry-meta {
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .archive-entry-meta .archive-entry-response-count {
+    margin-left: 0;
   }
 
   .archive-entry-date {

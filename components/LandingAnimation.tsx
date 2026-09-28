@@ -1,41 +1,34 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 
+const introduction = [
+  {
+    eyebrow: 'FIELD NOTE 001',
+    title: <>Before it becomes a theory,<br />before anyone agrees…</>,
+    detail: 'There is a first thought.',
+  },
+  {
+    eyebrow: 'THE READING ROOM',
+    title: <>Keep the words<br />as they were written.</>,
+    detail: 'Read ideas. Follow the conversation. Check the record.',
+  },
+  {
+    eyebrow: 'A PUBLIC ARCHIVE',
+    title: <>Let the conversation<br />continue.</>,
+    detail: 'Readable text is held in an archive. Its hash is recorded on Arbitrum Sepolia, a test network.',
+  },
+];
+
 export default function LandingAnimation({ onComplete }: { onComplete: () => void }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const decorRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const leftCurtainRef = useRef<HTMLDivElement>(null);
   const rightCurtainRef = useRef<HTMLDivElement>(null);
-  const revealSeamRef = useRef<HTMLDivElement>(null);
-  const copyRef = useRef<HTMLDivElement>(null);
-  const controlsRef = useRef<HTMLDivElement>(null);
-  const lineOneRef = useRef<HTMLParagraphElement>(null);
-  const lineTwoRef = useRef<HTMLParagraphElement>(null);
-  const lineThreeRef = useRef<HTMLParagraphElement>(null);
-  const lineFourRef = useRef<HTMLParagraphElement>(null);
-  const provenanceRef = useRef<HTMLParagraphElement>(null);
-  const timelineRef = useRef<gsap.core.Timeline | null>(null);
-  const progressTargetRef = useRef(0);
-  const touchStartYRef = useRef<number | null>(null);
-  const suppressClickRef = useRef(false);
+  const seamRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef(onComplete);
-  const [progress, setProgress] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [touchMode, setTouchMode] = useState(false);
-
-  const seekTimeline = useCallback((nextProgress: number, duration = 0.34) => {
-    const timeline = timelineRef.current;
-    if (!timeline) return;
-    progressTargetRef.current = Math.max(0, Math.min(1, nextProgress));
-    gsap.to(timeline, {
-      progress: progressTargetRef.current,
-      duration,
-      ease: 'power2.out',
-      overwrite: true,
-    });
-  }, []);
 
   useEffect(() => {
     completionRef.current = onComplete;
@@ -43,259 +36,94 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setTouchMode(window.matchMedia('(pointer: coarse)').matches);
     setReducedMotion(media.matches);
-    if (media.matches) return;
 
-    const context = gsap.context(() => {
-      const timeline = gsap.timeline({
-        paused: true,
-        defaults: { ease: 'power3.out' },
-        onComplete: () => completionRef.current(),
-        onUpdate: () => setProgress(timeline.progress()),
-      });
+    const handleMotionChange = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
+    media.addEventListener('change', handleMotionChange);
+    return () => media.removeEventListener('change', handleMotionChange);
+  }, []);
 
-      timelineRef.current = timeline;
-      progressTargetRef.current = 0;
+  useEffect(() => {
+    if (reducedMotion || !contentRef.current) return;
+    gsap.fromTo(contentRef.current,
+      { autoAlpha: 0, y: 18, scale: 0.985, filter: 'blur(5px)' },
+      { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.55, ease: 'power2.out' },
+    );
+  }, [activeSlide, reducedMotion]);
 
-      timeline
-        .fromTo(lineOneRef.current,
-          { autoAlpha: 0, x: -18, y: 28, scale: 0.97, filter: 'blur(8px)' },
-          { autoAlpha: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.95 },
-        )
-        .to(lineOneRef.current, { autoAlpha: 0, x: 12, y: -18, scale: 1.02, filter: 'blur(5px)', duration: 0.5 }, '+=0.85')
-        .fromTo(lineTwoRef.current,
-          { autoAlpha: 0, x: 24, y: 12, scale: 0.95, letterSpacing: '0.08em', filter: 'blur(7px)' },
-          { autoAlpha: 1, x: 0, y: 0, scale: 1, letterSpacing: '0em', filter: 'blur(0px)', duration: 0.92 },
-          '-=0.12',
-        )
-        .to(lineTwoRef.current, { autoAlpha: 0, x: -14, y: -12, scale: 1.025, duration: 0.48 }, '+=0.85')
-        .fromTo(lineThreeRef.current,
-          { autoAlpha: 0, y: 26, scale: 0.93, filter: 'blur(7px)' },
-          { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.92 },
-          '-=0.1',
-        )
-        .to(lineThreeRef.current, { autoAlpha: 0, y: -16, scale: 1.03, duration: 0.48 }, '+=0.85')
-        .fromTo(lineFourRef.current,
-          { autoAlpha: 0, y: 24, scale: 0.96, filter: 'blur(5px)' },
-          { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.9 },
-          '-=0.08',
-        )
-        .fromTo(provenanceRef.current,
-          { autoAlpha: 0, y: 12 },
-          { autoAlpha: 1, y: 0, duration: 0.5 },
-          '-=0.45',
-        )
-        .to([decorRef.current, copyRef.current, controlsRef.current], {
-          autoAlpha: 0,
-          y: -10,
-          duration: 0.4,
-          ease: 'power2.in',
-        }, '+=0.9')
-        .fromTo(revealSeamRef.current,
-          { autoAlpha: 0, scaleY: 0 },
-          { autoAlpha: 0.9, scaleY: 1, duration: 0.28, ease: 'power2.out' },
-          '<+0.08',
-        )
-        .to(leftCurtainRef.current, {
-          xPercent: -102,
-          duration: 1.15,
-          ease: 'power4.inOut',
-        }, '<+0.2')
-        .to(rightCurtainRef.current, {
-          xPercent: 102,
-          duration: 1.15,
-          ease: 'power4.inOut',
-        }, '<')
-        .to(revealSeamRef.current, {
-          autoAlpha: 0,
-          duration: 0.2,
-          ease: 'power1.out',
-        }, '<');
-    }, containerRef);
-
-    const getTimeline = () => timelineRef.current;
-    const advance = (amount: number) => {
-      const timeline = getTimeline();
-      if (!timeline) return;
-      seekTimeline(progressTargetRef.current + amount);
-    };
-
-    const handleWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      advance(Math.max(-0.14, Math.min(0.14, event.deltaY * 0.00125)));
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === ' ') {
-        event.preventDefault();
-        advance(0.08);
-      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-        event.preventDefault();
-        advance(-0.08);
-      } else if (event.key === 'Enter' || event.key === 'Escape') {
-        event.preventDefault();
-        skipToArchive();
-      }
-    };
-
-    function skipToArchive() {
-      const timeline = getTimeline();
-      if (!timeline) return;
-      progressTargetRef.current = 1;
-      gsap.to(timeline, {
-        progress: 1,
-        duration: 0.65,
-        ease: 'power2.inOut',
-        overwrite: true,
-      });
-    }
-
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('keydown', handleKeyDown);
-      timelineRef.current?.kill();
-      context.revert();
-    };
-  }, [seekTimeline]);
-
-  const handleSkip = () => {
+  const enterArchive = () => {
     if (reducedMotion) {
       completionRef.current();
       return;
     }
-    const timeline = timelineRef.current;
-    if (!timeline) return;
-    progressTargetRef.current = 1;
-    gsap.to(timeline, {
-      progress: 1,
-      duration: 0.65,
-      ease: 'power2.inOut',
-      overwrite: true,
-    });
+    const transition = gsap.timeline({ onComplete: () => completionRef.current() });
+    transition
+      .to(contentRef.current, { autoAlpha: 0, y: -12, duration: 0.28, ease: 'power2.in' })
+      .to(seamRef.current, { autoAlpha: 0.85, scaleY: 1, duration: 0.22, ease: 'power2.out' }, '<+0.04')
+      .to(leftCurtainRef.current, { xPercent: -102, duration: 0.82, ease: 'power4.inOut' }, '<+0.14')
+      .to(rightCurtainRef.current, { xPercent: 102, duration: 0.82, ease: 'power4.inOut' }, '<')
+      .to(seamRef.current, { autoAlpha: 0, duration: 0.18 }, '<');
   };
 
-  const handleAdvance = () => {
-    if (reducedMotion) return;
-    const timeline = timelineRef.current;
-    if (!timeline) return;
-    seekTimeline(progressTargetRef.current + 0.12);
-  };
+  const slide = introduction[activeSlide];
 
   return (
     <div
-      ref={containerRef}
-      className={`fixed inset-0 flex touch-none items-center justify-center overflow-hidden cursor-pointer ${reducedMotion ? 'landing-reduced-motion' : ''}`}
+      className={`landing-intro fixed inset-0 flex items-center justify-center overflow-hidden ${reducedMotion ? 'landing-reduced-motion' : ''}`}
       role="region"
       aria-label="Permanence Protocol introduction"
-      onClick={(event) => {
-        if (suppressClickRef.current) {
-          suppressClickRef.current = false;
-          return;
-        }
-        if ((event.target as HTMLElement).closest('button, a')) return;
-        handleAdvance();
-      }}
-      onTouchStart={(event) => {
-        if ((event.target as HTMLElement).closest('button, a')) return;
-        touchStartYRef.current = event.changedTouches[0]?.clientY ?? null;
-      }}
-      onTouchEnd={(event) => {
-        const startY = touchStartYRef.current;
-        touchStartYRef.current = null;
-        if (startY === null) return;
-
-        const endY = event.changedTouches[0]?.clientY;
-        if (endY === undefined) return;
-        const swipeDistance = endY - startY;
-        if (Math.abs(swipeDistance) < 24) return;
-
-        suppressClickRef.current = true;
-        const timeline = timelineRef.current;
-        if (!timeline || reducedMotion) return;
-        const height = Math.max(window.innerHeight, 1);
-        const nextProgress = progressTargetRef.current - (swipeDistance / height) * 0.45;
-        seekTimeline(nextProgress, 0.38);
-      }}
-      style={{
-        color: '#faf9f7',
-        zIndex: 9999,
-        willChange: reducedMotion ? 'auto' : 'transform',
-      }}
+      aria-roledescription="introduction"
+      style={{ color: '#faf9f7', zIndex: 9999 }}
     >
-      <div
-        ref={leftCurtainRef}
-        className="landing-curtain landing-curtain-left"
-        aria-hidden="true"
-      />
-      <div
-        ref={rightCurtainRef}
-        className="landing-curtain landing-curtain-right"
-        aria-hidden="true"
-      />
-      <div
-        ref={revealSeamRef}
-        className="landing-reveal-seam"
-        aria-hidden="true"
-      />
+      <div ref={leftCurtainRef} className="landing-curtain landing-curtain-left" aria-hidden="true" />
+      <div ref={rightCurtainRef} className="landing-curtain landing-curtain-right" aria-hidden="true" />
+      <div ref={seamRef} className="landing-reveal-seam" aria-hidden="true" />
+      <div className="landing-intro-grain" aria-hidden="true" />
 
-      <div ref={decorRef} className="absolute inset-0 z-[3] pointer-events-none" aria-hidden="true">
-        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/[0.035]" />
-        <div className="absolute left-6 right-6 top-6 flex justify-between archive-mono text-[10px] tracking-[0.16em] text-white/35 sm:left-10 sm:right-10 sm:top-8">
-          <span>FIELD NOTE 001</span>
+      <div ref={contentRef} className="landing-intro-content relative z-[4] mx-auto flex w-full max-w-5xl flex-col items-center px-6 text-center sm:px-12">
+        <div className="landing-intro-topline archive-mono">
+          <span>{slide.eyebrow}</span>
           <span>AN ARCHIVE FOR IDEAS</span>
         </div>
-      </div>
 
-      <div ref={copyRef} className="relative z-[4] mx-auto flex min-h-[min(70vh,520px)] w-full max-w-5xl items-center justify-center px-6 text-center sm:px-12">
-        <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-12">
-          <p ref={lineOneRef} className="max-w-4xl archive-display text-[clamp(2.5rem,7vw,6rem)] leading-[1.08] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
-            Before it becomes a theory,<br />before anyone agrees…
-          </p>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-12">
-          <p ref={lineTwoRef} className="max-w-4xl archive-display text-[clamp(2.8rem,8vw,7rem)] leading-[1.05] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
-            there is a first thought.
-          </p>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-12">
-          <p ref={lineThreeRef} className="max-w-4xl archive-display text-[clamp(2.8rem,8vw,7rem)] leading-[1.05] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
-            Keep the words as they were written.
-          </p>
-        </div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 sm:px-12">
-          <p ref={lineFourRef} className="max-w-4xl archive-display text-[clamp(2.7rem,7.5vw,6.5rem)] leading-[1.06] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
-            Let the conversation continue.
-          </p>
-          <p ref={provenanceRef} className="mt-6 max-w-lg text-sm leading-relaxed text-white/55 sm:text-base" style={{ opacity: 0 }}>
-            The text is held in an archive. Its hash is recorded on Arbitrum Sepolia, a test network.
-          </p>
+        <div className="landing-intro-copy" aria-live="polite" aria-atomic="true">
+          <h1 className="archive-display">{slide.title}</h1>
+          <p className="landing-intro-detail">{slide.detail}</p>
         </div>
 
-        {reducedMotion && (
-          <div className="absolute inset-x-6 bottom-3 text-center sm:bottom-0">
-            <p className="archive-display text-2xl leading-snug text-white sm:text-3xl">An idea begins with a first thought.</p>
-            <p className="mt-3 text-sm text-white/60">Read the words. Follow the conversation. Check the record.</p>
+        <div className="landing-intro-controls">
+          <div className="landing-intro-progress" aria-label={`Introduction step ${activeSlide + 1} of ${introduction.length}`}>
+            {introduction.map((step, index) => (
+              <span key={step.eyebrow} className={index === activeSlide ? 'is-current' : index < activeSlide ? 'is-complete' : ''} />
+            ))}
           </div>
-        )}
-      </div>
 
-      <div ref={controlsRef} className="absolute inset-x-6 bottom-7 z-[4] flex flex-col items-center gap-4 sm:bottom-9">
-        <div className="h-px w-40 overflow-hidden bg-white/15" aria-hidden="true">
-          <div className="h-full bg-[#c17a5f] transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+          <p className="archive-mono landing-intro-hint">
+            {reducedMotion ? 'REDUCED MOTION' : `STEP ${String(activeSlide + 1).padStart(2, '0')} OF ${String(introduction.length).padStart(2, '0')}`}
+          </p>
+
+          <div className="landing-intro-actions">
+            {activeSlide > 0 && (
+              <button type="button" className="landing-intro-back" onClick={() => setActiveSlide((step) => Math.max(0, step - 1))}>
+                <span aria-hidden="true">←</span> Back
+              </button>
+            )}
+            {activeSlide < introduction.length - 1 ? (
+              <button type="button" className="landing-intro-continue" onClick={() => setActiveSlide((step) => Math.min(introduction.length - 1, step + 1))}>
+                Continue <span aria-hidden="true">→</span>
+              </button>
+            ) : (
+              <button type="button" className="landing-intro-continue" onClick={enterArchive}>
+                Enter the archive <span aria-hidden="true">→</span>
+              </button>
+            )}
+            {activeSlide < introduction.length - 1 && (
+              <button type="button" className="landing-intro-skip" onClick={enterArchive}>
+                Skip introduction
+              </button>
+            )}
+          </div>
         </div>
-        <p className="archive-mono text-[10px] tracking-[0.12em] text-white/45">
-          {reducedMotion ? 'MOTION REDUCED' : touchMode ? 'SWIPE OR TAP TO UNCOVER' : 'SCROLL OR USE THE ARROW KEYS TO UNCOVER'}
-        </p>
-        <button
-          type="button"
-          onClick={handleSkip}
-          className="border border-white/30 px-5 py-2 text-xs text-white/85 transition-colors hover:border-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
-        >
-          Enter the archive <span aria-hidden="true">→</span>
-        </button>
       </div>
     </div>
   );
