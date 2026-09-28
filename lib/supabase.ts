@@ -32,15 +32,21 @@ export interface Response {
   timestamp: string;
 }
 
-export async function getIdeas() {
+export async function getIdeas({ page, pageSize, query }: { page: number; pageSize: number; query: string }) {
   if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
+  const start = (page - 1) * pageSize;
+  let request = supabase
     .from('ideas')
-    .select('*, responses(count)')
-    .order('timestamp', { ascending: false });
+    .select('*, responses(count)', { count: 'exact' })
+    .order('timestamp', { ascending: false })
+    .range(start, start + pageSize - 1);
+
+  if (query) request = request.ilike('content', `%${query}%`);
+
+  const { data, error, count } = await request;
 
   if (error) throw error;
-  return (data ?? []).map((idea) => {
+  const ideas = (data ?? []).map((idea) => {
     const responseCount = Array.isArray(idea.responses)
       ? Number(idea.responses[0]?.count ?? 0)
       : 0;
@@ -48,6 +54,8 @@ export async function getIdeas() {
     const { responses: _responses, ...ideaRecord } = idea;
     return { ...ideaRecord, response_count: responseCount };
   });
+
+  return { ideas, total: count ?? 0 };
 }
 
 export async function getResponsesByIdeaId(ideaId: string) {

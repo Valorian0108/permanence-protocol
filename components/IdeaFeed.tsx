@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getIdeas, getResponsesByIdeaId, Idea, Response } from '../lib/supabase';
 import PostResponseForm from './PostResponseForm';
 import HashVerification from './HashVerification';
@@ -12,38 +12,60 @@ export default function IdeaFeed({
   canPost: boolean;
   onSignIn: () => void;
 }) {
+  const PAGE_SIZE = 25;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [totalIdeas, setTotalIdeas] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [query, setQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const requestNumber = useRef(0);
 
   const fetchIdeas = useCallback(async () => {
+    const currentRequest = ++requestNumber.current;
     setLoading(true);
     setLoadError('');
     try {
-      const data = await getIdeas();
-      setIdeas(data);
+      const result = await getIdeas({ page, pageSize: PAGE_SIZE, query: searchQuery });
+      if (currentRequest !== requestNumber.current) return;
+      setIdeas(result.ideas);
+      setTotalIdeas(result.total);
     } catch (error) {
+      if (currentRequest !== requestNumber.current) return;
       console.error('Error fetching ideas:', error);
       setLoadError('The archive could not be loaded. Check your connection and try again.');
     } finally {
-      setLoading(false);
+      if (currentRequest === requestNumber.current) setLoading(false);
     }
-  }, []);
+  }, [page, searchQuery]);
 
   useEffect(() => {
     if (supabaseUrl) void fetchIdeas();
     else setLoading(false);
   }, [fetchIdeas, supabaseUrl]);
 
-  const filteredIdeas = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase();
-    return ideas.filter((idea) => {
-      const matchesQuery = !normalizedQuery || idea.content.toLocaleLowerCase().includes(normalizedQuery);
-      return matchesQuery;
-    });
-  }, [ideas, query]);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setPage(1);
+      setSearchQuery(query.trim());
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
+
+  const filteredIdeas = ideas;
+  const totalPages = Math.max(1, Math.ceil(totalIdeas / PAGE_SIZE));
+  const firstVisiblePage = Math.max(1, Math.min(page - 2, totalPages - 4));
+  const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, index) => firstVisiblePage + index);
+  const firstEntry = totalIdeas === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const lastEntry = Math.min(page * PAGE_SIZE, totalIdeas);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === page) return;
+    setPage(nextPage);
+    document.getElementById('archive-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   if (!supabaseUrl) return null;
 
@@ -59,7 +81,10 @@ export default function IdeaFeed({
           <input
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setPage(1);
+            }}
             placeholder="Find an idea"
             className="archive-search"
           />
@@ -68,7 +93,7 @@ export default function IdeaFeed({
 
       <div className="archive-feed-toolbar">
         <span className="archive-entry-total archive-mono">
-          {query.trim() ? `${filteredIdeas.length} MATCHING ${filteredIdeas.length === 1 ? 'ENTRY' : 'ENTRIES'}` : `${ideas.length} ${ideas.length === 1 ? 'ENTRY' : 'ENTRIES'}`}
+          {searchQuery ? `${totalIdeas} MATCHING ${totalIdeas === 1 ? 'ENTRY' : 'ENTRIES'}` : `${totalIdeas} ${totalIdeas === 1 ? 'ENTRY' : 'ENTRIES'}`}
         </span>
         <span className="archive-read-note archive-mono">PUBLIC TO READ · SIGN-IN TO CONTRIBUTE</span>
       </div>
@@ -80,11 +105,11 @@ export default function IdeaFeed({
           <p>{loadError}</p>
           <button type="button" onClick={fetchIdeas} className="archive-text-button">Try again</button>
         </div>
-      ) : ideas.length === 0 ? (
+      ) : totalIdeas === 0 ? (
         <div className="archive-feed-state">
-          <h3>The archive is waiting for its first entry.</h3>
-          <p>An idea can be a question, observation, hypothesis, proposal, or tested result. It needn’t be proven to be worth sharing.</p>
-          {!canPost && <button type="button" onClick={onSignIn} className="archive-button archive-button-solid">Sign in to contribute</button>}
+          <h3>{searchQuery ? 'No ideas match that search.' : 'The archive is waiting for its first entry.'}</h3>
+          {!searchQuery && <p>An idea can be a question, observation, hypothesis, proposal, or tested result. It needn’t be proven to be worth sharing.</p>}
+          {!searchQuery && !canPost && <button type="button" onClick={onSignIn} className="archive-button archive-button-solid">Sign in to contribute</button>}
         </div>
       ) : (
         <>
@@ -96,21 +121,46 @@ export default function IdeaFeed({
               </button>
             </div>
           )}
-          {filteredIdeas.length === 0 ? (
-            <p className="archive-feed-state" role="status">No ideas match that search.</p>
-          ) : (
+          {filteredIdeas.length > 0 && (
             <div className="archive-entries">
               {filteredIdeas.map((idea, index) => (
                 <IdeaCard
                   key={idea.id}
                   idea={idea}
-                  index={index}
+                  index={firstEntry + index - 1}
                   canPost={canPost}
                   onSignIn={onSignIn}
                 />
               ))}
             </div>
           )}
+          {totalPages > 1 && (
+            <nav className="archive-pagination" aria-label="Archive pages">
+              <button type="button" className="archive-page-step" onClick={() => changePage(page - 1)} disabled={page === 1 || loading}>
+                <span aria-hidden="true">←</span> Previous
+              </button>
+              <div className="archive-page-list" aria-label={`Page ${page} of ${totalPages}`}>
+                {pageNumbers.map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    type="button"
+                    className={`archive-page-number${pageNumber === page ? ' is-current' : ''}`}
+                    aria-label={`Page ${pageNumber}`}
+                    aria-current={pageNumber === page ? 'page' : undefined}
+                    onClick={() => changePage(pageNumber)}
+                    disabled={loading}
+                  >
+                    {String(pageNumber).padStart(2, '0')}
+                  </button>
+                ))}
+                <span className="archive-page-total archive-mono">/ {String(totalPages).padStart(2, '0')}</span>
+              </div>
+              <button type="button" className="archive-page-step" onClick={() => changePage(page + 1)} disabled={page === totalPages || loading}>
+                Next <span aria-hidden="true">→</span>
+              </button>
+            </nav>
+          )}
+          {totalIdeas > 0 && <p className="archive-page-caption archive-mono">SHOWING {firstEntry}–{lastEntry} OF {totalIdeas} {searchQuery ? 'MATCHING ' : ''}{totalIdeas === 1 ? 'ENTRY' : 'ENTRIES'}</p>}
         </>
       )}
     </section>

@@ -642,6 +642,85 @@ body {
   border-bottom: 0;
 }
 
+.archive-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+  padding-block: 13px;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.archive-page-step,
+.archive-page-number {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  color: var(--color-ink-light);
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.archive-page-step {
+  padding-inline: 10px;
+}
+
+.archive-page-number {
+  width: 38px;
+  color: var(--color-ink-lighter);
+  font-size: 10px;
+}
+
+.archive-page-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.archive-page-number:hover:not(:disabled),
+.archive-page-step:hover:not(:disabled) {
+  border-color: var(--color-border);
+  color: var(--color-reading-accent);
+}
+
+.archive-page-number.is-current {
+  border-color: var(--color-reading-accent);
+  color: var(--color-reading-accent);
+  background: var(--color-reading-accent-soft);
+}
+
+.archive-page-number:focus-visible,
+.archive-page-step:focus-visible {
+  outline: 2px solid var(--color-reading-focus);
+  outline-offset: 2px;
+}
+
+.archive-page-number:disabled,
+.archive-page-step:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.archive-page-total,
+.archive-page-caption {
+  color: var(--color-ink-lighter);
+  font-size: 9px;
+  letter-spacing: .055em;
+}
+
+.archive-page-caption {
+  margin: 10px 0 0;
+  text-align: center;
+}
+
 .archive-entry-meta {
   display: flex;
   align-items: center;
@@ -1033,6 +1112,28 @@ body {
     justify-content: center;
     gap: 3px;
     padding-block: 9px;
+  }
+
+  .archive-pagination {
+    gap: 6px;
+    margin-top: 20px;
+    padding-block: 9px;
+  }
+
+  .archive-page-step {
+    gap: 5px;
+    padding-inline: 4px;
+    font-size: 10px;
+  }
+
+  .archive-page-number {
+    width: 31px;
+    min-height: 34px;
+    font-size: 9px;
+  }
+
+  .archive-page-list {
+    gap: 1px;
   }
 
   .archive-entry-content {
