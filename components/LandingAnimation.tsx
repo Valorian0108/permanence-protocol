@@ -17,9 +17,12 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
   const lineFourRef = useRef<HTMLParagraphElement>(null);
   const provenanceRef = useRef<HTMLParagraphElement>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const suppressClickRef = useRef(false);
   const completionRef = useRef(onComplete);
   const [progress, setProgress] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [touchMode, setTouchMode] = useState(false);
 
   useEffect(() => {
     completionRef.current = onComplete;
@@ -27,6 +30,7 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setTouchMode(window.matchMedia('(pointer: coarse)').matches);
     setReducedMotion(media.matches);
     if (media.matches) return;
 
@@ -171,12 +175,38 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 flex items-center justify-center overflow-hidden cursor-pointer ${reducedMotion ? 'landing-reduced-motion' : ''}`}
+      className={`fixed inset-0 flex touch-none items-center justify-center overflow-hidden cursor-pointer ${reducedMotion ? 'landing-reduced-motion' : ''}`}
       role="region"
       aria-label="Permanence Protocol introduction"
       onClick={(event) => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          return;
+        }
         if ((event.target as HTMLElement).closest('button, a')) return;
         handleAdvance();
+      }}
+      onTouchStart={(event) => {
+        if ((event.target as HTMLElement).closest('button, a')) return;
+        touchStartYRef.current = event.changedTouches[0]?.clientY ?? null;
+      }}
+      onTouchEnd={(event) => {
+        const startY = touchStartYRef.current;
+        touchStartYRef.current = null;
+        if (startY === null) return;
+
+        const endY = event.changedTouches[0]?.clientY;
+        if (endY === undefined) return;
+        const swipeDistance = endY - startY;
+        if (Math.abs(swipeDistance) < 24) return;
+
+        suppressClickRef.current = true;
+        const timeline = timelineRef.current;
+        if (!timeline || reducedMotion) return;
+        const height = Math.max(window.innerHeight, 1);
+        const nextProgress = Math.max(0, Math.min(1, timeline.progress() - (swipeDistance / height) * 0.65));
+        timeline.progress(nextProgress);
+        setProgress(nextProgress);
       }}
       style={{
         color: '#faf9f7',
@@ -246,7 +276,7 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
           <div className="h-full bg-[#c17a5f] transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
         </div>
         <p className="archive-mono text-[10px] tracking-[0.12em] text-white/45">
-          {reducedMotion ? 'MOTION REDUCED' : 'SCROLL OR USE THE ARROW KEYS TO UNCOVER'}
+          {reducedMotion ? 'MOTION REDUCED' : touchMode ? 'SWIPE OR TAP TO UNCOVER' : 'SCROLL OR USE THE ARROW KEYS TO UNCOVER'}
         </p>
         <button
           type="button"
