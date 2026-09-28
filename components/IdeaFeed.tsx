@@ -160,12 +160,18 @@ function IdeaCard({
     void fetchResponses();
     setShowResponseForm(false);
   };
+  const responseCount = responsesLoaded ? responses.length : idea.response_count ?? 0;
+  const shortWallet = formatWalletId(idea.submitter_wallet_address);
 
   return (
     <article className="archive-entry">
       <div className="archive-entry-meta">
         <span className="archive-entry-number archive-mono">{String(index + 1).padStart(2, '0')}</span>
         <span className="archive-entry-type">Idea</span>
+        <span className="archive-wallet-id archive-mono" aria-label={`Posted by wallet ${shortWallet}`} title="Pseudonymous wallet identifier">by {shortWallet}</span>
+        <span className="archive-entry-response-count archive-mono" aria-label={`${responseCount} ${responseCount === 1 ? 'response' : 'responses'}`}>
+          {responseCount} {responseCount === 1 ? 'response' : 'responses'}
+        </span>
         <time className="archive-entry-date" dateTime={idea.timestamp}>{new Date(idea.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
       </div>
 
@@ -243,6 +249,7 @@ function IdeaCard({
             <article key={response.id} className="archive-response">
               <div className="archive-response-meta">
                 <span className={`archive-response-type archive-response-${response.response_type.toLowerCase()}`}>{response.response_type}</span>
+                <span className="archive-wallet-id archive-mono" aria-label={`Posted by wallet ${formatWalletId(response.submitter_wallet_address)}`} title="Pseudonymous wallet identifier">by {formatWalletId(response.submitter_wallet_address)}</span>
                 <time dateTime={response.timestamp}>{new Date(response.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</time>
               </div>
               <p>{response.content}</p>
@@ -269,4 +276,9 @@ function IdeaCard({
       )}
     </article>
   );
+}
+
+function formatWalletId(address: string) {
+  if (address.length <= 12) return address;
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }

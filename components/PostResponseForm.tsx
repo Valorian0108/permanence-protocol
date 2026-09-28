@@ -151,20 +151,39 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="responseType" className="block text-sm archive-ink-light mb-2">
-            Response Type
-          </label>
-          <select
-            id="responseType"
-            value={responseType}
-            onChange={(e) => setResponseType(e.target.value as ResponseType)}
-            className="w-full p-3 border archive-border bg-white focus:outline-none focus:ring-1 focus:ring-ink transition-all"
-            disabled={isSubmitting || Boolean(recoveryTicket)}
-          >
-            <option value="Support">Support</option>
-            <option value="Challenge">Challenge</option>
-            <option value="Evidence">Evidence</option>
-          </select>
+          <span className="mb-2 block text-sm archive-ink-light" id="responseType-label">
+            Response type
+          </span>
+          <div className="archive-response-type-picker" role="radiogroup" aria-labelledby="responseType-label">
+            {([
+              { value: 'Support', description: 'Add agreement or nuance' },
+              { value: 'Challenge', description: 'Question or counterpoint' },
+              { value: 'Evidence', description: 'Share sources or observations' },
+            ] as const).map(({ value, description }, index, options) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={responseType === value}
+                tabIndex={responseType === value ? 0 : -1}
+                disabled={isSubmitting || Boolean(recoveryTicket)}
+                className={`archive-response-type-option${responseType === value ? ' is-selected' : ''}`}
+                onClick={() => setResponseType(value)}
+                onKeyDown={(event) => {
+                  if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) return;
+                  event.preventDefault();
+                  const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
+                  const nextIndex = (index + direction + options.length) % options.length;
+                  const nextType = options[nextIndex].value;
+                  setResponseType(nextType);
+                  event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[nextIndex]?.focus();
+                }}
+              >
+                <span className="archive-response-type-option-name">{value}</span>
+                <span className="archive-response-type-option-description">{description}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>

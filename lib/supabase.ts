@@ -16,6 +16,7 @@ export interface Idea {
   transaction_hash: string;
   block_number: number | null;
   timestamp: string;
+  response_count?: number;
 }
 
 export interface Response {
@@ -35,11 +36,18 @@ export async function getIdeas() {
   if (!supabase) throw new Error('Supabase not configured');
   const { data, error } = await supabase
     .from('ideas')
-    .select('*')
+    .select('*, responses(count)')
     .order('timestamp', { ascending: false });
 
   if (error) throw error;
-  return data;
+  return (data ?? []).map((idea) => {
+    const responseCount = Array.isArray(idea.responses)
+      ? Number(idea.responses[0]?.count ?? 0)
+      : 0;
+
+    const { responses: _responses, ...ideaRecord } = idea;
+    return { ...ideaRecord, response_count: responseCount };
+  });
 }
 
 export async function getResponsesByIdeaId(ideaId: string) {
