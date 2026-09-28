@@ -25,7 +25,7 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
   const [reducedMotion, setReducedMotion] = useState(false);
   const [touchMode, setTouchMode] = useState(false);
 
-  const seekTimeline = useCallback((nextProgress: number, duration = 0.22) => {
+  const seekTimeline = useCallback((nextProgress: number, duration = 0.34) => {
     const timeline = timelineRef.current;
     if (!timeline) return;
     progressTargetRef.current = Math.max(0, Math.min(1, nextProgress));
@@ -61,29 +61,29 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
       timeline
         .fromTo(lineOneRef.current,
           { autoAlpha: 0, x: -18, y: 28, scale: 0.97, filter: 'blur(8px)' },
-          { autoAlpha: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.82 },
+          { autoAlpha: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.95 },
         )
-        .to(lineOneRef.current, { autoAlpha: 0, x: 12, y: -18, scale: 1.02, filter: 'blur(5px)', duration: 0.42 }, '+=0.58')
+        .to(lineOneRef.current, { autoAlpha: 0, x: 12, y: -18, scale: 1.02, filter: 'blur(5px)', duration: 0.5 }, '+=0.85')
         .fromTo(lineTwoRef.current,
           { autoAlpha: 0, x: 24, y: 12, scale: 0.95, letterSpacing: '0.08em', filter: 'blur(7px)' },
-          { autoAlpha: 1, x: 0, y: 0, scale: 1, letterSpacing: '0em', filter: 'blur(0px)', duration: 0.78 },
+          { autoAlpha: 1, x: 0, y: 0, scale: 1, letterSpacing: '0em', filter: 'blur(0px)', duration: 0.92 },
           '-=0.12',
         )
-        .to(lineTwoRef.current, { autoAlpha: 0, x: -14, y: -12, scale: 1.025, duration: 0.4 }, '+=0.62')
+        .to(lineTwoRef.current, { autoAlpha: 0, x: -14, y: -12, scale: 1.025, duration: 0.48 }, '+=0.85')
         .fromTo(lineThreeRef.current,
           { autoAlpha: 0, y: 26, scale: 0.93, filter: 'blur(7px)' },
-          { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.78 },
+          { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.92 },
           '-=0.1',
         )
-        .to(lineThreeRef.current, { autoAlpha: 0, y: -16, scale: 1.03, duration: 0.4 }, '+=0.62')
+        .to(lineThreeRef.current, { autoAlpha: 0, y: -16, scale: 1.03, duration: 0.48 }, '+=0.85')
         .fromTo(lineFourRef.current,
           { autoAlpha: 0, y: 24, scale: 0.96, filter: 'blur(5px)' },
-          { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.72 },
+          { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', duration: 0.9 },
           '-=0.08',
         )
         .fromTo(provenanceRef.current,
           { autoAlpha: 0, y: 12 },
-          { autoAlpha: 1, y: 0, duration: 0.42 },
+          { autoAlpha: 1, y: 0, duration: 0.5 },
           '-=0.45',
         )
         .to([decorRef.current, copyRef.current, controlsRef.current], {
@@ -91,7 +91,7 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
           y: -10,
           duration: 0.4,
           ease: 'power2.in',
-        }, '+=0.7')
+        }, '+=0.9')
         .fromTo(revealSeamRef.current,
           { autoAlpha: 0, scaleY: 0 },
           { autoAlpha: 0.9, scaleY: 1, duration: 0.28, ease: 'power2.out' },
@@ -123,15 +123,15 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
 
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault();
-      advance(Math.max(-0.22, Math.min(0.22, event.deltaY * 0.002)));
+      advance(Math.max(-0.14, Math.min(0.14, event.deltaY * 0.00125)));
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === ' ') {
         event.preventDefault();
-        advance(0.1);
+        advance(0.08);
       } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
         event.preventDefault();
-        advance(-0.1);
+        advance(-0.08);
       } else if (event.key === 'Enter' || event.key === 'Escape') {
         event.preventDefault();
         skipToArchive();
@@ -181,7 +181,7 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
     if (reducedMotion) return;
     const timeline = timelineRef.current;
     if (!timeline) return;
-    seekTimeline(progressTargetRef.current + 0.16);
+    seekTimeline(progressTargetRef.current + 0.12);
   };
 
   return (
@@ -216,8 +216,8 @@ export default function LandingAnimation({ onComplete }: { onComplete: () => voi
         const timeline = timelineRef.current;
         if (!timeline || reducedMotion) return;
         const height = Math.max(window.innerHeight, 1);
-        const nextProgress = progressTargetRef.current - (swipeDistance / height) * 0.65;
-        seekTimeline(nextProgress, 0.3);
+        const nextProgress = progressTargetRef.current - (swipeDistance / height) * 0.45;
+        seekTimeline(nextProgress, 0.38);
       }}
       style={{
         color: '#faf9f7',
