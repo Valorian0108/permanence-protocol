@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { postResponse } from '../lib/backend';
-import { insertResponse, getIdeaById } from '../lib/supabase';
 
 interface PostResponseFormProps {
   ideaId: string;
@@ -19,19 +18,11 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const { authenticated, user } = usePrivy();
-
-  useEffect(() => {
-    if (authenticated && user) {
-      const wallet = user.linkedAccounts.find((account: any) => 
-        account.type === 'wallet' || account.type === 'smart_wallet'
-      ) as any;
-      if (wallet && wallet.address) {
-        setWalletAddress(wallet.address);
-      }
-    }
-  }, [authenticated, user]);
+  const [warning, setWarning] = useState('');
+  const [transactionHash, setTransactionHash] = useState('');
+  const [recoveryTicket, setRecoveryTicket] = useState('');
+  const [confirmedIrreversible, setConfirmedIrreversible] = useState(false);
+  const { authenticated, getAccessToken } = usePrivy();
 
   // Compute SHA-256 hash in real-time
   const computeHash = async (text: string) => {
@@ -51,6 +42,7 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
+    setConfirmedIrreversible(false);
     computeHash(newContent);
   };
 
@@ -67,7 +59,7 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
       return;
     }
 
-    if (!walletAddress) {
+    if (!authenticated) {
       setError('Please sign in to post a response');
       return;
     }
@@ -75,59 +67,87 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
     setIsSubmitting(true);
     setError('');
     setSuccess('');
+    setWarning('');
+    setTransactionHash('');
+    setRecoveryTicket('');
 
     try {
-      // Get the on-chain idea ID from Supabase
-      const ideaData = await getIdeaById(ideaId);
-      const onchainIdeaId = ideaData.onchain_idea_id;
-
-      if (onchainIdeaId === null) {
-        throw new Error('Idea not found on blockchain');
-      }
-
       // Convert response type to number (0=Support, 1=Challenge, 2=Evidence)
       const responseTypeNumber = responseType === 'Support' ? 0 : responseType === 'Challenge' ? 1 : 2;
 
-      // Step 1: Submit to backend signer (blockchain) - use on-chain ID
-      const blockchainResult = await postResponse(onchainIdeaId.toString(), contentHash, responseTypeNumber);
+      const accessToken = await getAccessToken();
+      if (!accessToken) throw new Error('Your session expired. Please sign in again.');
+
+      // The authenticated API resolves the on-chain ID and stores the database record.
+      const blockchainResult = await postResponse(ideaId, content, contentHash, responseTypeNumber, accessToken);
       
       if (!blockchainResult.success) {
         throw new Error('Failed to submit to blockchain');
       }
 
-      // Step 2: Store in Supabase
-      await insertResponse({
-        idea_id: ideaId,
-        content_hash: contentHash,
-        content: content,
-        response_type: responseType,
-        submitter_wallet_address: walletAddress,
-        onchain_response_id: parseInt(blockchainResult.responseId),
-        transaction_hash: blockchainResult.transactionHash,
-        block_number: parseInt(blockchainResult.blockNumber),
-      });
+      setTransactionHash(blockchainResult.transactionHash);
 
-      setSuccess(`Response posted! Transaction: ${blockchainResult.transactionHash.slice(0, 10)}...${blockchainResult.transactionHash.slice(-8)}`);
-      
-      // Clear form on success
+      if (blockchainResult.archiveSaved === false) {
+        setRecoveryTicket(blockchainResult.recoveryTicket || '');
+        setWarning(blockchainResult.warning || 'The transaction is confirmed, but the archive save needs attention. Do not submit this response again.');
+        return;
+      }
+
+      setSuccess('Response recorded on-chain and saved to the archive.');
       setContent('');
       setContentHash('');
+      setConfirmedIrreversible(false);
       
       // Notify parent to refresh
       onResponsePosted();
     } catch (err) {
-      setError('Failed to post response. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to post response. Please try again.');
       console.error('Error posting response:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const recoverArchiveSave = async () => {
+    if (!recoveryTicket) return;
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) throw new Error('Your session expired. Sign in again to recover the archive record.');
+
+      const response = await fetch('/api/recover-post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ content, contentHash, recoveryTicket }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not recover the archive record.');
+
+      setSuccess('The existing transaction has been verified and the response is now saved in the archive.');
+      setWarning('');
+      setRecoveryTicket('');
+      setContent('');
+      setContentHash('');
+      setConfirmedIrreversible(false);
+      onResponsePosted();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not recover the archive record.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="border-t archive-border pt-6 mt-6">
-      <h3 className="text-lg archive-display archive-ink mb-4">
-        Respond to this Idea
+    <div className="archive-response-form">
+      <h3 className="archive-display archive-ink">
+        Add to the conversation
       </h3>
+      <p className="archive-form-intro">Offer support, a challenge, or evidence. Responses add to the record; they don’t rewrite the original idea.</p>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -139,7 +159,7 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
             value={responseType}
             onChange={(e) => setResponseType(e.target.value as ResponseType)}
             className="w-full p-3 border archive-border bg-white focus:outline-none focus:ring-1 focus:ring-ink transition-all"
-            disabled={isSubmitting}
+            disabled={isSubmitting || Boolean(recoveryTicket)}
           >
             <option value="Support">Support</option>
             <option value="Challenge">Challenge</option>
@@ -148,14 +168,14 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
         </div>
 
         <div>
-          <label htmlFor="content" className="block text-sm archive-ink-light mb-2">
-            Your Response
+            <label htmlFor="content" className="block text-sm archive-ink-light mb-2">
+            Your response
           </label>
           <textarea
             id="content"
             value={content}
             onChange={handleContentChange}
-            placeholder="Provide your support, challenge, or evidence..."
+            placeholder="What would you add to this conversation?"
             className="w-full p-4 border archive-border bg-white resize-none focus:outline-none focus:ring-1 focus:ring-ink transition-all"
             style={{ 
               minHeight: '100px',
@@ -163,7 +183,7 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
               fontSize: 'var(--text-body)',
               lineHeight: 'var(--leading-body)'
             }}
-            disabled={isSubmitting}
+            disabled={isSubmitting || Boolean(recoveryTicket)}
           />
         </div>
 
@@ -173,33 +193,71 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
               Content Hash (SHA-256):
             </div>
             <code className="archive-mono archive-ink break-all" style={{ fontSize: 'var(--text-mono)' }}>
-              {contentHash}
+            {contentHash}
             </code>
+            <div className="mt-2 text-xs archive-ink-lighter">
+              The readable response is saved in the archive database. Only this SHA-256 hash is recorded on Arbitrum Sepolia.
+            </div>
           </div>
         )}
 
+        {content.trim() && (
+          <label className="flex items-start gap-3 text-sm archive-ink-light">
+            <input
+              type="checkbox"
+              checked={confirmedIrreversible}
+              onChange={(event) => setConfirmedIrreversible(event.target.checked)}
+              disabled={isSubmitting}
+              className="mt-1"
+            />
+            <span>I understand that the response will be saved to the archive, only its hash is recorded on-chain, and the on-chain record cannot be removed.</span>
+          </label>
+        )}
+
         {error && (
-          <div className="text-sm text-red-600">
+          <div className="text-sm text-red-600" role="alert">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="text-sm text-green-600">
+          <div className="text-sm text-green-700" role="status">
             {success}
+            {transactionHash && (
+              <> {' '}
+                <a href={`https://sepolia.arbiscan.io/tx/${transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">
+                  View transaction
+                </a>
+              </>
+            )}
+          </div>
+        )}
+
+        {warning && (
+          <div className="space-y-2 text-sm text-amber-900" role="alert">
+            <p>{warning}</p>
+            {transactionHash && (
+              <a href={`https://sepolia.arbiscan.io/tx/${transactionHash}`} target="_blank" rel="noopener noreferrer" className="underline">
+                View confirmed transaction
+              </a>
+            )}
+            {recoveryTicket && (
+              <button type="button" onClick={recoverArchiveSave} disabled={isSubmitting} className="underline disabled:opacity-50">
+                {isSubmitting ? 'Recovering archive record…' : 'Retry archive save (no new transaction)'}
+              </button>
+            )}
           </div>
         )}
 
         <button
           type="submit"
-          disabled={!contentHash || isSubmitting}
-          className="px-6 py-3 text-white text-base archive-display transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!contentHash || !confirmedIrreversible || isSubmitting || Boolean(recoveryTicket)}
+          className="archive-button archive-button-solid archive-submit-button archive-display disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ 
-            backgroundColor: 'var(--color-ink)',
-            opacity: (!contentHash || isSubmitting) ? 0.5 : 1
+            opacity: (!contentHash || !confirmedIrreversible || isSubmitting || Boolean(recoveryTicket)) ? 0.5 : 1
           }}
         >
-          {isSubmitting ? 'Posting...' : 'Post Response'}
+          {isSubmitting ? 'Recording…' : 'Add response'}
         </button>
       </form>
     </div>

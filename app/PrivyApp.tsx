@@ -17,6 +17,7 @@ export default function PrivyApp() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [privyError, setPrivyError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [archiveRevision, setArchiveRevision] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -47,23 +48,18 @@ export default function PrivyApp() {
     );
   }
 
-  // Show landing animation
-  if (showLanding) {
-    return <LandingAnimation onComplete={handleAnimationComplete} />;
-  }
-
   // Show error if Privy failed
   if (privyError) {
     return (
       <div className="min-h-screen archive-paper">
-        <header className="border-b archive-border bg-white">
-          <div className="max-w-4xl mx-auto px-6 py-4">
+      <header className="archive-header">
+          <div className="archive-shell archive-header-inner">
             <h1 className="text-2xl font-semibold archive-display archive-ink">
               Permanence Protocol
             </h1>
           </div>
         </header>
-        <main className="max-w-4xl mx-auto px-6 py-8">
+        <main className="archive-shell archive-main">
           <div className="text-center py-16">
             <h2 className="text-3xl archive-display archive-ink mb-4">
               Authentication Error
@@ -87,66 +83,75 @@ export default function PrivyApp() {
   return (
     <div className="min-h-screen archive-paper">
       {/* Header */}
-      <header className="border-b archive-border bg-white">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold archive-display archive-ink">
-              Permanence Protocol
-            </h1>
-            <p className="text-sm archive-ink-lighter">
-              Permanent • Verifiable • Immutable
-            </p>
-          </div>
-          {!authenticated ? (
-            <button
-              onClick={() => login()}
-              className="px-4 py-2 bg-ink text-white text-sm hover:bg-ink-light transition-colors"
-              style={{ backgroundColor: 'var(--color-ink)' }}
-            >
-              Sign In
-            </button>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className="text-sm archive-ink-lighter">
-                <span className="archive-mono">{walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}</span>
-              </div>
+      <header className="archive-header">
+        <div className="archive-shell archive-header-inner">
+          <a className="archive-brand" href="#top" aria-label="Permanence Protocol home">
+            <span className="archive-brand-mark" aria-hidden="true">P</span>
+            <span>
+              <span className="archive-brand-name">Permanence Protocol</span>
+              <span className="archive-brand-caption">An archive for ideas</span>
+            </span>
+          </a>
+          <nav className="archive-nav" aria-label="Main navigation">
+            <a href="#archive">The archive</a>
+            <a href="#why-share">Why preserve an idea?</a>
+            {!authenticated ? (
               <button
-                onClick={logout}
-                className="px-4 py-2 border archive-border text-sm hover:bg-gray-50 transition-colors"
+                onClick={() => login()}
+                className="archive-button archive-button-outline"
               >
-                Sign Out
+                Sign in to contribute
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="archive-account">
+                <span className="archive-account-wallet archive-mono">{walletAddress?.slice(0, 6)}…{walletAddress?.slice(-4)}</span>
+                <button
+                  onClick={logout}
+                  className="archive-button archive-button-outline"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </nav>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        {!authenticated ? (
-          <div className="text-center py-16">
-            <h2 className="text-3xl archive-display archive-ink mb-4">
-              Ideas usually die quietly
-            </h2>
-            <p className="text-lg archive-ink-light mb-8" style={{ maxWidth: 'var(--measure-body)', margin: '0 auto 2rem' }}>
-              Most ideas disappear into notebooks, documents, or get buried by algorithms. 
-              Permanence Protocol locks ideas onchain so the conversation around an idea can never be deleted or rewritten.
-            </p>
-            <button
-              onClick={() => login()}
-              className="px-6 py-3 text-white text-base archive-display transition-colors"
-              style={{ backgroundColor: 'var(--color-ink)' }}
-            >
-              Enter the Archive
-            </button>
+      <main id="top" className="archive-shell archive-main">
+        <section className="archive-intro" aria-labelledby="archive-intro-title">
+          <div className="archive-intro-copy">
+            <p className="archive-eyebrow">A public reading room</p>
+            <h1 id="archive-intro-title">An idea is a beginning.<br /><span>Keep the first words.</span></h1>
+            <p className="archive-lede">Read ideas as they were written. Follow the responses. And, when you want to, check the record for yourself.</p>
           </div>
-        ) : (
-          <div className="space-y-8">
-            <PostIdeaForm />
-            <IdeaFeed />
-          </div>
+          <aside className="archive-principle" id="why-share">
+            <p className="archive-eyebrow">Why preserve an idea?</p>
+            <h3>An idea doesn’t have to be proven to be worth preserving.</h3>
+            <p>Record a question, observation, hypothesis, proposal, or tested result. Others can respond and build on it. The archive preserves what was said; it doesn’t certify that it’s true.</p>
+          </aside>
+        </section>
+
+        <section className="archive-explainer" aria-label="How this archive works">
+          <span className="archive-status-dot" aria-hidden="true" />
+          <p><strong>The words live in the archive.</strong> A hash is recorded on Arbitrum Sepolia and can be checked against the text.</p>
+          <span className="archive-network archive-mono">TEST NETWORK</span>
+        </section>
+
+        {authenticated && (
+          <section className="archive-compose" aria-label="Contribute an idea">
+            <PostIdeaForm onIdeaPosted={() => setArchiveRevision((revision) => revision + 1)} />
+          </section>
         )}
+
+        <IdeaFeed key={archiveRevision} canPost={authenticated} onSignIn={() => login()} />
+
+        <footer className="archive-footer">
+          <p>PERMANENCE PROTOCOL · PUBLIC ARCHIVE</p>
+          <p>A test-network prototype. Archive availability is not guaranteed.</p>
+        </footer>
       </main>
+      {showLanding && <LandingAnimation onComplete={handleAnimationComplete} />}
     </div>
   );
 }

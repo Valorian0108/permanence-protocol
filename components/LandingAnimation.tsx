@@ -5,212 +5,214 @@ import gsap from 'gsap';
 
 export default function LandingAnimation({ onComplete }: { onComplete: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const text1Ref = useRef<HTMLDivElement>(null);
-  const text2Ref = useRef<HTMLDivElement>(null);
-  const text3Ref = useRef<HTMLDivElement>(null);
-  const text4Ref = useRef<HTMLDivElement>(null);
-  const particlesRef = useRef<HTMLDivElement>(null);
+  const lineOneRef = useRef<HTMLParagraphElement>(null);
+  const lineTwoRef = useRef<HTMLParagraphElement>(null);
+  const lineThreeRef = useRef<HTMLParagraphElement>(null);
+  const lineFourRef = useRef<HTMLParagraphElement>(null);
+  const provenanceRef = useRef<HTMLParagraphElement>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
+  const completionRef = useRef(onComplete);
   const [progress, setProgress] = useState(0);
-  const [showHint, setShowHint] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    const tl = gsap.timeline({
-      paused: true, // Start paused, controlled by user
-      onComplete,
-      defaults: {
-        ease: 'power4.inOut'
-      }
-    });
+    completionRef.current = onComplete;
+  }, [onComplete]);
 
-    timelineRef.current = tl;
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(media.matches);
+    if (media.matches) return;
 
-    // Beat 1: "Ideas die quietly." - Text fractures into particles
-    tl.fromTo(text1Ref.current,
-      { opacity: 0, y: 50 },
-      { opacity: 1, y: 0, duration: 1.5 }
-    )
-    .to(text1Ref.current, {
-      opacity: 0,
-      scale: 1.2,
-      filter: 'blur(10px)',
-      duration: 1,
-      ease: 'power2.in'
-    }, '+=1.5')
-    .addLabel('fragmentation')
-    .fromTo(particlesRef.current,
-      { opacity: 0, scale: 0 },
-      { opacity: 1, scale: 1, duration: 0.8, ease: 'elastic.out(1, 0.5)' },
-      'fragmentation-=0.5'
-    )
-    .to(particlesRef.current, {
-      opacity: 0,
-      y: -200,
-      duration: 1.5,
-      ease: 'expo.inOut'
-    }, 'fragmentation+=0.3')
+    const context = gsap.context(() => {
+      const timeline = gsap.timeline({
+        paused: true,
+        defaults: { ease: 'power3.out' },
+        onComplete: () => completionRef.current(),
+        onUpdate: () => setProgress(timeline.progress()),
+      });
 
-    // Beat 2: "Locked. Forever." - Text crystallizes into solid block
-    .addLabel('crystallization')
-    .fromTo(text2Ref.current,
-      { opacity: 0, scale: 0.8, filter: 'blur(5px)' },
-      { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 1.2, ease: 'elastic.out(1, 0.5)' },
-      'crystallization'
-    )
-    .to(text2Ref.current, {
-      opacity: 0,
-      scale: 1.1,
-      filter: 'blur(2px)',
-      duration: 0.8,
-      ease: 'power2.in'
-    }, 'crystallization+=2')
+      timelineRef.current = timeline;
 
-    // Beat 3: "Unchangeable. Verifiable." - Block opens like vault
-    .addLabel('vault')
-    .fromTo(text3Ref.current,
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 1, ease: 'expo.out' },
-      'vault'
-    )
-    .to(text3Ref.current, {
-      opacity: 0,
-      scale: 0.95,
-      duration: 0.6,
-      ease: 'power2.in'
-    }, 'vault+=2')
+      timeline
+        .fromTo(lineOneRef.current,
+          { autoAlpha: 0, y: 20, filter: 'blur(8px)' },
+          { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 1.1 },
+        )
+        .to(lineOneRef.current, { autoAlpha: 0, y: -12, filter: 'blur(5px)', duration: 0.6 }, '+=1.15')
+        .fromTo(lineTwoRef.current,
+          { autoAlpha: 0, y: 18, letterSpacing: '0.08em', filter: 'blur(7px)' },
+          { autoAlpha: 1, y: 0, letterSpacing: '0em', filter: 'blur(0px)', duration: 1.05 },
+          '-=0.12',
+        )
+        .to(lineTwoRef.current, { autoAlpha: 0, y: -10, duration: 0.55 }, '+=1.2')
+        .fromTo(lineThreeRef.current,
+          { autoAlpha: 0, scale: 0.985, filter: 'blur(7px)' },
+          { autoAlpha: 1, scale: 1, filter: 'blur(0px)', duration: 1.05 },
+          '-=0.1',
+        )
+        .to(lineThreeRef.current, { autoAlpha: 0, y: -8, duration: 0.5 }, '+=1.2')
+        .fromTo(lineFourRef.current,
+          { autoAlpha: 0, y: 16, filter: 'blur(5px)' },
+          { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.9 },
+          '-=0.08',
+        )
+        .fromTo(provenanceRef.current,
+          { autoAlpha: 0, y: 8 },
+          { autoAlpha: 1, y: 0, duration: 0.55 },
+          '-=0.45',
+        )
+        .to(containerRef.current, {
+          yPercent: -100,
+          duration: 1,
+          ease: 'power3.inOut',
+        }, '+=1.35');
+    }, containerRef);
 
-    // Beat 4: "Enter." - Transition to app
-    .addLabel('enter')
-    .fromTo(text4Ref.current,
-      { opacity: 0, scale: 0.9 },
-      { opacity: 1, scale: 1, duration: 0.8, ease: 'expo.out' },
-      'enter'
-    )
-    .to(containerRef.current, {
-      opacity: 0,
-      duration: 0.5,
-      ease: 'power2.in'
-    }, 'enter+=1.5');
+    const getTimeline = () => timelineRef.current;
+    const advance = (amount: number) => {
+      const timeline = getTimeline();
+      if (!timeline) return;
+      const nextProgress = Math.min(1, timeline.progress() + amount);
+      timeline.progress(nextProgress);
+      setProgress(nextProgress);
+    };
 
-    // Update progress on timeline update
-    tl.eventCallback('onUpdate', () => {
-      setProgress(tl.progress());
-    });
-
-    // Scroll control
-    const handleScroll = (e: WheelEvent) => {
-      e.preventDefault();
-      const delta = e.deltaY * 0.001;
-      const newProgress = Math.max(0, Math.min(1, tl.progress() + delta));
-      tl.progress(newProgress);
-      
-      // Hide hint once user starts scrolling
-      if (newProgress > 0.05) {
-        setShowHint(false);
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      advance(Math.max(-0.16, Math.min(0.16, event.deltaY * 0.001)));
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === ' ') {
+        event.preventDefault();
+        advance(0.1);
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        advance(-0.1);
+      } else if (event.key === 'Enter' || event.key === 'Escape') {
+        event.preventDefault();
+        skipToArchive();
       }
     };
 
-    // Keyboard control
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault();
-        const newProgress = Math.min(1, tl.progress() + 0.05);
-        tl.progress(newProgress);
-        setShowHint(false);
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        const newProgress = Math.max(0, tl.progress() - 0.05);
-        tl.progress(newProgress);
-        setShowHint(false);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        tl.progress(1); // Skip to end
-        setShowHint(false);
-      }
-    };
+    function skipToArchive() {
+      const timeline = getTimeline();
+      if (!timeline) return;
+      gsap.to(timeline, {
+        progress: 1,
+        duration: 0.85,
+        ease: 'power2.inOut',
+        overwrite: true,
+      });
+    }
 
-    // Add event listeners
-    window.addEventListener('wheel', handleScroll, { passive: false });
+    window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      tl.kill();
-      window.removeEventListener('wheel', handleScroll);
+      window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('keydown', handleKeyDown);
+      timelineRef.current?.kill();
+      context.revert();
     };
-  }, [onComplete]);
+  }, []);
+
+  const handleSkip = () => {
+    if (reducedMotion) {
+      completionRef.current();
+      return;
+    }
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+    gsap.to(timeline, {
+      progress: 1,
+      duration: 0.85,
+      ease: 'power2.inOut',
+      overwrite: true,
+    });
+  };
+
+  const handleAdvance = () => {
+    if (reducedMotion) return;
+    const timeline = timelineRef.current;
+    if (!timeline) return;
+    const nextProgress = Math.min(1, timeline.progress() + 0.1);
+    timeline.progress(nextProgress);
+    setProgress(nextProgress);
+  };
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 flex items-center justify-center bg-ink cursor-pointer"
-      style={{ backgroundColor: 'var(--color-ink)', zIndex: 9999 }}
-      onClick={() => {
-        // Click to advance slightly
-        if (timelineRef.current) {
-          const newProgress = Math.min(1, timelineRef.current.progress() + 0.1);
-          timelineRef.current.progress(newProgress);
-          setShowHint(false);
-        }
+      className="fixed inset-0 flex items-center justify-center overflow-hidden cursor-pointer"
+      role="region"
+      aria-label="Permanence Protocol introduction"
+      onClick={(event) => {
+        if ((event.target as HTMLElement).closest('button, a')) return;
+        handleAdvance();
+      }}
+      style={{
+        background: 'radial-gradient(ellipse at 50% 42%, #34332e 0%, #24241f 48%, #171714 100%)',
+        color: '#faf9f7',
+        zIndex: 9999,
+        willChange: reducedMotion ? 'auto' : 'transform',
       }}
     >
-      <div className="relative">
-        {/* Subtle scroll indicator */}
-        {showHint && (
-          <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
-            <div className="flex items-center gap-2 text-white/40 text-xs archive-mono">
-              <div className="w-6 h-px bg-white/40"></div>
-              <span>Scroll to explore</span>
-              <div className="w-6 h-px bg-white/40"></div>
-            </div>
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/[0.035]" />
+        <div className="absolute left-6 right-6 top-6 flex justify-between archive-mono text-[10px] tracking-[0.16em] text-white/35 sm:left-10 sm:right-10 sm:top-8">
+          <span>FIELD NOTE 001</span>
+          <span>AN ARCHIVE FOR IDEAS</span>
+        </div>
+      </div>
+
+      <div className="relative mx-auto flex min-h-[min(70vh,520px)] w-full max-w-5xl items-center justify-center px-6 text-center sm:px-12">
+        <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-12">
+          <p ref={lineOneRef} className="max-w-4xl archive-display text-[clamp(2.5rem,7vw,6rem)] leading-[1.08] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
+            Before it becomes a theory,<br />before anyone agrees…
+          </p>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-12">
+          <p ref={lineTwoRef} className="max-w-4xl archive-display text-[clamp(2.8rem,8vw,7rem)] leading-[1.05] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
+            there is a first thought.
+          </p>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-12">
+          <p ref={lineThreeRef} className="max-w-4xl archive-display text-[clamp(2.8rem,8vw,7rem)] leading-[1.05] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
+            Keep the words as they were written.
+          </p>
+        </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 sm:px-12">
+          <p ref={lineFourRef} className="max-w-4xl archive-display text-[clamp(2.7rem,7.5vw,6.5rem)] leading-[1.06] tracking-[-0.04em] text-white" style={{ opacity: 0 }}>
+            Let the conversation continue.
+          </p>
+          <p ref={provenanceRef} className="mt-6 max-w-lg text-sm leading-relaxed text-white/55 sm:text-base" style={{ opacity: 0 }}>
+            The text is held in an archive. Its hash is recorded on Arbitrum Sepolia, a test network.
+          </p>
+        </div>
+
+        {reducedMotion && (
+          <div className="absolute inset-x-6 bottom-3 text-center sm:bottom-0">
+            <p className="archive-display text-2xl leading-snug text-white sm:text-3xl">An idea begins with a first thought.</p>
+            <p className="mt-3 text-sm text-white/60">Read the words. Follow the conversation. Check the record.</p>
           </div>
         )}
+      </div>
 
-        {/* Beat 1 */}
-        <div
-          ref={text1Ref}
-          className="absolute inset-0 flex items-center justify-center text-white archive-display"
-          style={{ fontSize: 'var(--text-display-xl)', opacity: 0 }}
-        >
-          Ideas die quietly.
+      <div className="absolute inset-x-6 bottom-7 flex flex-col items-center gap-4 sm:bottom-9">
+        <div className="h-px w-40 overflow-hidden bg-white/15" aria-hidden="true">
+          <div className="h-full bg-[#c17a5f] transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
         </div>
-
-        {/* Beat 2 */}
-        <div
-          ref={text2Ref}
-          className="absolute inset-0 flex items-center justify-center text-white archive-display"
-          style={{ fontSize: 'var(--text-display-xl)', opacity: 0 }}
+        <p className="archive-mono text-[10px] tracking-[0.12em] text-white/45">
+          {reducedMotion ? 'MOTION REDUCED' : 'SCROLL OR USE THE ARROW KEYS TO UNCOVER'}
+        </p>
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="border border-white/30 px-5 py-2 text-xs text-white/85 transition-colors hover:border-white/70 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
-          Locked. Forever.
-        </div>
-
-        {/* Beat 3 */}
-        <div
-          ref={text3Ref}
-          className="absolute inset-0 flex items-center justify-center text-white archive-display"
-          style={{ fontSize: 'var(--text-display-xl)', opacity: 0 }}
-        >
-          Unchangeable. Verifiable.
-        </div>
-
-        {/* Beat 4 */}
-        <div
-          ref={text4Ref}
-          className="absolute inset-0 flex items-center justify-center text-white archive-display"
-          style={{ fontSize: 'var(--text-display-xl)', opacity: 0 }}
-        >
-          Enter.
-        </div>
-
-        {/* Particles */}
-        <div
-          ref={particlesRef}
-          className="absolute inset-0 opacity-0"
-          style={{
-            background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
-            opacity: 0
-          }}
-        />
+          Enter the archive <span aria-hidden="true">→</span>
+        </button>
       </div>
     </div>
   );

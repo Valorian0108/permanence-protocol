@@ -78,12 +78,16 @@ export class BackendSigner {
           continue;
         }
       }
+
+      if (ideaId === null) {
+        throw new Error("IdeaPosted event was not found in the transaction receipt");
+      }
       
       return {
         success: true,
         transactionHash: tx.hash,
         blockNumber: receipt.blockNumber.toString(),
-        ideaId: ideaId ? ideaId.toString() : null
+        ideaId: ideaId.toString()
       };
     } catch (error) {
       console.error("Error posting idea:", error);
@@ -125,12 +129,16 @@ export class BackendSigner {
           continue;
         }
       }
+
+      if (responseId === null) {
+        throw new Error("ResponsePosted event was not found in the transaction receipt");
+      }
       
       return {
         success: true,
         transactionHash: tx.hash,
         blockNumber: receipt.blockNumber.toString(),
-        responseId: responseId ? responseId.toString() : null
+        responseId: responseId.toString()
       };
     } catch (error) {
       console.error("Error posting response:", error);

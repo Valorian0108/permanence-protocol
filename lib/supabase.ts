@@ -31,52 +31,12 @@ export interface Response {
   timestamp: string;
 }
 
-export async function insertIdea(ideaData: {
-  content_hash: string;
-  content: string;
-  submitter_wallet_address: string;
-  onchain_idea_id: number;
-  transaction_hash: string;
-  block_number: number;
-}) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
-    .from('ideas')
-    .insert(ideaData)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
 export async function getIdeas() {
   if (!supabase) throw new Error('Supabase not configured');
   const { data, error } = await supabase
     .from('ideas')
     .select('*')
     .order('timestamp', { ascending: false });
-
-  if (error) throw error;
-  return data;
-}
-
-export async function insertResponse(responseData: {
-  idea_id: string;
-  content_hash: string;
-  content: string;
-  response_type: string;
-  submitter_wallet_address: string;
-  onchain_response_id: number;
-  transaction_hash: string;
-  block_number: number;
-}) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
-    .from('responses')
-    .insert(responseData)
-    .select()
-    .single();
 
   if (error) throw error;
   return data;

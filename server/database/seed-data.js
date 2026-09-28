@@ -108,6 +108,10 @@ async function seedDatabase() {
         if (seedIdea.responses && seedIdea.responses.length > 0) {
           console.log(`\n  Checking responses...`);
           const existingResponses = await db.getResponsesByIdeaId(existingDuplicate.id);
+
+          if (existingDuplicate.onchain_idea_id === null) {
+            throw new Error("Existing idea is missing its on-chain idea ID");
+          }
           
           for (let j = 0; j < seedIdea.responses.length; j++) {
             const response = seedIdea.responses[j];
@@ -124,7 +128,7 @@ async function seedDatabase() {
             console.log(`  Response ${j + 1}: ${response.type}`);
             console.log(`  Posting to blockchain...`);
             const responseBlockchainResult = await signer.postResponse(
-              blockchainResult.ideaId.toString(),
+              existingDuplicate.onchain_idea_id.toString(),
               responseHash,
               responseTypeMap[response.type]
             );
@@ -145,6 +149,7 @@ async function seedDatabase() {
               transaction_hash: responseBlockchainResult.transactionHash,
               block_number: parseInt(responseBlockchainResult.blockNumber),
             });
+            existingResponses.push({ content_hash: responseHash });
             
             console.log(`  ✓ Response database success!`);
           }
@@ -153,6 +158,8 @@ async function seedDatabase() {
         console.log(`\n✓ Idea ${i + 1} already seeded, skipping.`);
         continue;
       }
+
+      const blockchainResult = await signer.postIdea(contentHash);
       
       if (!blockchainResult.success) {
         throw new Error("Blockchain submission failed");

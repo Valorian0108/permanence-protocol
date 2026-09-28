@@ -1,4 +1,18 @@
 /** @type {import('next').NextConfig} */
+const supabaseOrigin = (() => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+      ? parsed.origin
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
@@ -8,7 +22,14 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.privy.io https://*.privyusercontent.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.privy.io https://*.privyusercontent.com;"
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.privy.io https://*.privyusercontent.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https:",
+              `connect-src 'self' ${supabaseOrigin || ''} https://*.privy.io https://*.privyusercontent.com https://explorer-api.walletconnect.com https://relay.walletconnect.com wss://relay.walletconnect.com`,
+              "frame-src 'self' https://*.privy.io https://*.privyusercontent.com",
+            ].join('; ')
           }
         ]
       }

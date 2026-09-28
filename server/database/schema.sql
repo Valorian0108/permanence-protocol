@@ -8,7 +8,7 @@ CREATE TABLE ideas (
   content TEXT NOT NULL,
   submitter_wallet_address TEXT NOT NULL,
   onchain_idea_id BIGINT,
-  transaction_hash TEXT NOT NULL,
+  transaction_hash TEXT NOT NULL UNIQUE,
   block_number BIGINT,
   timestamp TIMESTAMP DEFAULT NOW()
 );
@@ -22,7 +22,7 @@ CREATE TABLE responses (
   response_type TEXT CHECK (response_type IN ('Support', 'Challenge', 'Evidence')),
   submitter_wallet_address TEXT NOT NULL,
   onchain_response_id BIGINT,
-  transaction_hash TEXT NOT NULL,
+  transaction_hash TEXT NOT NULL UNIQUE,
   block_number BIGINT,
   timestamp TIMESTAMP DEFAULT NOW()
 );
@@ -43,16 +43,8 @@ ALTER TABLE responses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow public read access to ideas" ON ideas FOR SELECT USING (true);
 CREATE POLICY "Allow public read access to responses" ON responses FOR SELECT USING (true);
 
--- RLS Policies: Allow insert only with proper authentication (to be implemented with Privy)
--- For now, allow inserts for testing - will be restricted once Privy is integrated
-CREATE POLICY "Allow insert to ideas" ON ideas FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow insert to responses" ON responses FOR INSERT WITH CHECK (true);
-
--- RLS Policies: Prevent updates and deletes (permanence principle)
-CREATE POLICY "Prevent updates to ideas" ON ideas FOR UPDATE USING (false);
-CREATE POLICY "Prevent deletes to ideas" ON ideas FOR DELETE USING (false);
-CREATE POLICY "Prevent updates to responses" ON responses FOR UPDATE USING (false);
-CREATE POLICY "Allow deletes to responses only when parent idea is deleted" ON responses FOR DELETE USING (true);
+-- Writes use the server-only Supabase service-role key after Privy authentication.
+-- No anon/authenticated INSERT, UPDATE, or DELETE policies are created here.
 
 -- Comments explaining the schema
 COMMENT ON TABLE ideas IS 'Stores idea content with on-chain hash verification';

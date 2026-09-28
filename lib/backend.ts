@@ -1,21 +1,22 @@
 // Use relative path for same-origin API calls (works in both dev and production)
 const API_BASE = '';
 
-export async function postIdea(contentHash: string) {
+export async function postIdea(content: string, contentHash: string, accessToken: string) {
   try {
     const response = await fetch(`${API_BASE}/api/post-idea`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ contentHash }),
+      body: JSON.stringify({ content, contentHash }),
     });
 
+    const data = await response.json();
     if (!response.ok) {
-      throw new Error(`Backend API error: ${response.status}`);
+      throw new Error(data.error || `Backend API error: ${response.status}`);
     }
 
-    const data = await response.json();
     return data;
   } catch (error) {
     console.error('Error posting idea to backend:', error);
@@ -23,21 +24,22 @@ export async function postIdea(contentHash: string) {
   }
 }
 
-export async function postResponse(ideaId: string, contentHash: string, responseType: number) {
+export async function postResponse(ideaId: string, content: string, contentHash: string, responseType: number, accessToken: string) {
   try {
     const response = await fetch(`${API_BASE}/api/post-response`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ ideaId, contentHash, responseType }),
+      body: JSON.stringify({ ideaId, content, contentHash, responseType }),
     });
 
+    const data = await response.json();
     if (!response.ok) {
-      throw new Error(`Backend API error: ${response.status}`);
+      throw new Error(data.error || `Backend API error: ${response.status}`);
     }
 
-    const data = await response.json();
     return data;
   } catch (error) {
     console.error('Error posting response to backend:', error);
