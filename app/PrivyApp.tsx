@@ -86,7 +86,7 @@ export default function PrivyApp() {
       <header className="archive-header">
         <div className="archive-shell archive-header-inner">
           <a className="archive-brand" href="#top" aria-label="Permanence Protocol home">
-            <span className="archive-brand-mark" aria-hidden="true">P</span>
+            <img className="archive-brand-mark" src="/permanence-mark.svg" alt="" aria-hidden="true" />
             <span>
               <span className="archive-brand-name">Permanence Protocol</span>
               <span className="archive-brand-caption">An archive for ideas</span>

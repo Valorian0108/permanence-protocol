@@ -10,6 +10,10 @@ const jetBrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'
 export const metadata: Metadata = {
   title: 'Permanence Protocol',
   description: 'Record a content hash on Arbitrum Sepolia and store readable text in an archive database. Verify the archived text against its on-chain hash. Testnet prototype; archive availability is not guaranteed.',
+  icons: {
+    icon: '/permanence-mark.svg',
+    shortcut: '/permanence-mark.svg',
+  },
 }
 
 export default function RootLayout({

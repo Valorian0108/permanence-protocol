@@ -368,15 +368,10 @@ body {
 }
 
 .archive-brand-mark {
-  display: grid;
-  width: 28px;
-  height: 28px;
+  display: block;
+  width: 38px;
+  height: 38px;
   flex: 0 0 auto;
-  place-items: center;
-  transform: rotate(-4deg);
-  border: 1px solid var(--color-reading-accent);
-  color: var(--color-reading-accent);
-  font: 16px/1 var(--font-display);
 }
 
 .archive-brand-name,
