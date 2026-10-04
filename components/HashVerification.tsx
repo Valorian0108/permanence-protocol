@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { serializeRecordV2, type RecordContext } from '../lib/record-hash';
 
 type VerificationResult = {
   textMatches: boolean;
@@ -13,11 +14,15 @@ export default function HashVerification({
   expectedHash,
   kind,
   onchainId,
+  recordVersion,
+  recordContext,
 }: {
   content: string;
   expectedHash: string;
   kind: 'idea' | 'response';
   onchainId: number | null;
+  recordVersion?: number;
+  recordContext?: RecordContext;
 }) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
@@ -36,7 +41,10 @@ export default function HashVerification({
         return;
       }
 
-      const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
+      const hashInput = kind === 'idea' && recordVersion === 2
+        ? serializeRecordV2(content, recordContext)
+        : content;
+      const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(hashInput));
       const actualHash = `0x${Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
       const textMatches = actualHash === expectedHash.toLowerCase();
       try {
@@ -66,7 +74,7 @@ export default function HashVerification({
         disabled={isVerifying}
         className="archive-verify-button underline archive-ink-light hover:archive-ink disabled:opacity-50"
       >
-        {isVerifying ? 'Verifying…' : 'Verify text and chain'}
+        {isVerifying ? 'Verifying…' : kind === 'idea' && recordVersion === 2 ? 'Verify record and chain' : 'Verify text and chain'}
       </button>
       {result && 'error' in result && (
         <span role="alert" className="text-red-700">{result.error}</span>
@@ -74,7 +82,9 @@ export default function HashVerification({
       {result && !('error' in result) && (
         <span role={result.textMatches && result.chainMatches === true ? 'status' : 'alert'} className="flex flex-wrap gap-x-3 gap-y-1">
           <span className={result.textMatches ? 'archive-verify-success' : 'archive-verify-failure'}>
-            {result.textMatches ? 'Text matches archive hash' : 'Text does not match archive hash'}
+            {result.textMatches
+              ? kind === 'idea' && recordVersion === 2 ? 'Record matches archive hash' : 'Text matches archive hash'
+              : kind === 'idea' && recordVersion === 2 ? 'Record does not match archive hash' : 'Text does not match archive hash'}
           </span>
           <span className={result.chainError ? 'archive-verify-warning' : result.chainMatches ? 'archive-verify-success' : 'archive-verify-failure'}>
             {result.chainError

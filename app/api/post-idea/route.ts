@@ -4,6 +4,7 @@ import { BackendSigner } from '../../../lib/signer';
 import { getAuthenticatedWallet } from '../../../lib/server-auth';
 import { consumePostRateLimit, contributorHasNickname, saveIdea } from '../../../lib/server-supabase';
 import { createPostRecoveryTicket } from '../../../lib/post-recovery';
+import { MAX_CONTEXT_FIELD_LENGTH, MAX_RECORD_CONTENT_LENGTH, RECORD_TYPES, serializeRecordV2, type RecordContext } from '../../../lib/record-hash';
 
 export const runtime = 'nodejs';
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { content, contentHash } = body;
+    const { content, contentHash, recordVersion, recordType, sources, method, limitations } = body;
 
     if (typeof content !== 'string' || typeof contentHash !== 'string') {
       return NextResponse.json(
@@ -27,11 +28,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!content.trim() || content.length > 10000) {
+    if (!content.trim() || content.length > MAX_RECORD_CONTENT_LENGTH) {
       return NextResponse.json({ error: 'Content must be between 1 and 10000 characters' }, { status: 400 });
     }
 
-    const expectedHash = `0x${createHash('sha256').update(content, 'utf8').digest('hex')}`;
+    if (recordVersion !== 2) {
+      return NextResponse.json({ error: 'Unsupported record format version' }, { status: 400 });
+    }
+
+    const optionalFields: Array<[string, unknown, number]> = [
+      ['sources', sources, MAX_CONTEXT_FIELD_LENGTH],
+      ['method', method, MAX_CONTEXT_FIELD_LENGTH],
+      ['limitations', limitations, MAX_CONTEXT_FIELD_LENGTH],
+    ];
+    for (const [field, value, maxLength] of optionalFields) {
+      if (value !== null && value !== undefined && (typeof value !== 'string' || value.length > maxLength)) {
+        return NextResponse.json({ error: `${field} must be text of at most ${maxLength} characters` }, { status: 400 });
+      }
+    }
+
+    const normalizedContext: RecordContext = {
+      recordType: recordType === '' || recordType == null ? null : recordType,
+      sources: typeof sources === 'string' && sources.trim() ? sources.trim() : null,
+      method: typeof method === 'string' && method.trim() ? method.trim() : null,
+      limitations: typeof limitations === 'string' && limitations.trim() ? limitations.trim() : null,
+    };
+    if (normalizedContext.recordType != null && !RECORD_TYPES.includes(normalizedContext.recordType)) {
+      return NextResponse.json({ error: 'Record type is not supported' }, { status: 400 });
+    }
+
+    const normalizedContent = content;
+    const canonicalRecord = serializeRecordV2(normalizedContent, normalizedContext);
+    const expectedHash = `0x${createHash('sha256').update(canonicalRecord, 'utf8').digest('hex')}`;
     if (contentHash !== expectedHash) {
       return NextResponse.json({ error: 'Content hash does not match content' }, { status: 400 });
     }
@@ -55,7 +83,12 @@ export async function POST(request: NextRequest) {
     try {
       await saveIdea({
         content_hash: contentHash,
-        content,
+        content: normalizedContent,
+        record_version: 2,
+        record_type: normalizedContext.recordType,
+        sources: normalizedContext.sources,
+        method: normalizedContext.method,
+        limitations: normalizedContext.limitations,
         submitter_wallet_address: walletAddress,
         onchain_idea_id: Number(result.ideaId),
         transaction_hash: result.transactionHash,
@@ -75,14 +108,19 @@ export async function POST(request: NextRequest) {
           transactionHash: result.transactionHash,
           blockNumber: Number(result.blockNumber),
           onchainId: Number(result.ideaId),
+          recordVersion: 2,
+          recordType: normalizedContext.recordType,
+          sources: normalizedContext.sources,
+          method: normalizedContext.method,
+          limitations: normalizedContext.limitations,
         }),
-        warning: 'The blockchain transaction is confirmed, but the readable idea could not be saved to the archive. Do not submit it again. Save the transaction hash and contact support so the archive record can be recovered.',
+        warning: 'The blockchain transaction is confirmed, but the readable record could not be saved to the archive. Do not submit it again. Save the transaction hash and contact support so the archive record can be recovered.',
       });
     }
   } catch (error) {
     console.error("Error in post-idea endpoint:", error);
     return NextResponse.json(
-      { error: error instanceof SyntaxError ? 'Invalid JSON request body' : 'Unable to preserve idea' },
+      { error: error instanceof SyntaxError ? 'Invalid JSON request body' : 'Unable to preserve record' },
       { status: error instanceof SyntaxError ? 400 : 500 }
     );
   }

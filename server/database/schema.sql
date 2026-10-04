@@ -6,6 +6,11 @@ CREATE TABLE ideas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   content_hash TEXT UNIQUE NOT NULL,
   content TEXT NOT NULL,
+  record_version SMALLINT NOT NULL DEFAULT 1 CHECK (record_version IN (1, 2)),
+  record_type TEXT CHECK (record_type IS NULL OR record_type IN ('question', 'observation', 'hypothesis', 'finding', 'proposal', 'other', 'not-sure')),
+  sources TEXT,
+  method TEXT,
+  limitations TEXT,
   submitter_wallet_address TEXT NOT NULL,
   onchain_idea_id BIGINT,
   transaction_hash TEXT NOT NULL UNIQUE,
@@ -48,7 +53,8 @@ CREATE POLICY "Allow public read access to responses" ON responses FOR SELECT US
 
 -- Comments explaining the schema
 COMMENT ON TABLE ideas IS 'Stores idea content with on-chain hash verification';
-COMMENT ON COLUMN ideas.content_hash IS 'SHA-256 hash of the content, stored on-chain';
+COMMENT ON COLUMN ideas.content_hash IS 'Versioned SHA-256 hash of the record serialization, stored on-chain';
+COMMENT ON COLUMN ideas.record_version IS 'Version of the canonical data serialized into content_hash; 1 is legacy text-only, 2 includes optional record context';
 COMMENT ON COLUMN ideas.onchain_idea_id IS 'ID from the smart contract event';
 COMMENT ON COLUMN ideas.transaction_hash IS 'Blockchain transaction hash';
 

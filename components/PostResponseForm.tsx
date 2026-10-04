@@ -147,7 +147,7 @@ export default function PostResponseForm({ ideaId, onResponsePosted }: PostRespo
       <h3 className="archive-display archive-ink">
         Add to the conversation
       </h3>
-      <p className="archive-form-intro">Offer support, a challenge, or evidence. Responses add to the record; they don’t rewrite the original idea.</p>
+      <p className="archive-form-intro">Offer support, a challenge, or evidence. Responses add to the record; they don’t rewrite the original submission.</p>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

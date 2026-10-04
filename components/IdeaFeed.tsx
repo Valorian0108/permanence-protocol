@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getIdeas, getResponsesByIdeaId } from '../lib/supabase';
+import { getIdeas, getResponsesByRecordId } from '../lib/supabase';
 import type { Idea, Response } from '../lib/supabase';
 import PostResponseForm from './PostResponseForm';
 import HashVerification from './HashVerification';
+import type { RecordType } from '../lib/record-hash';
 
 export default function IdeaFeed({
   canPost,
@@ -75,10 +76,10 @@ export default function IdeaFeed({
       <div className="archive-feed-heading">
         <div>
           <p className="archive-eyebrow">The collection</p>
-          <h2 id="archive-title">Ideas, in their own words</h2>
+          <h2 id="archive-title">Records, in their own words</h2>
         </div>
         <label className="archive-search-label">
-          <span className="sr-only">Search archived ideas</span>
+          <span className="sr-only">Search archived records</span>
           <input
             type="search"
             value={query}
@@ -86,7 +87,7 @@ export default function IdeaFeed({
               setQuery(event.target.value);
               setPage(1);
             }}
-            placeholder="Find an idea"
+            placeholder="Search records"
             className="archive-search"
           />
         </label>
@@ -108,8 +109,8 @@ export default function IdeaFeed({
         </div>
       ) : totalIdeas === 0 ? (
         <div className="archive-feed-state">
-          <h3>{searchQuery ? 'No ideas match that search.' : 'The archive is waiting for its first entry.'}</h3>
-          {!searchQuery && <p>An idea can be a question, observation, hypothesis, proposal, or tested result. It needn’t be proven to be worth sharing.</p>}
+          <h3>{searchQuery ? 'No records match that search.' : 'The archive is waiting for its first entry.'}</h3>
+          {!searchQuery && <p>A record can capture an early question or a developed finding. Add context where it helps. It needn’t be complete to be worth preserving.</p>}
           {!searchQuery && !canPost && <button type="button" onClick={onSignIn} className="archive-button archive-button-solid">Sign in to contribute</button>}
         </div>
       ) : (
@@ -123,7 +124,7 @@ export default function IdeaFeed({
             </div>
           )}
           {filteredIdeas.length > 0 && (
-          <div className="archive-entries">
+            <div className="archive-entries">
               {filteredIdeas.map((idea, index) => (
                 <IdeaCard
                   key={idea.id}
@@ -190,7 +191,7 @@ function IdeaCard({
     setResponsesLoading(true);
     setResponsesError('');
     try {
-      const data = await getResponsesByIdeaId(idea.id);
+      const data = await getResponsesByRecordId(idea.id);
       setResponses(data);
       setResponsesLoaded(true);
     } catch (error) {
@@ -215,6 +216,7 @@ function IdeaCard({
       <article className="archive-entry">
         <div className="archive-entry-meta">
           <span className="archive-entry-number archive-mono">{String(index + 1).padStart(2, '0')}</span>
+          {idea.record_type && <span className="archive-record-type-label">{idea.record_type}</span>}
           <span className="archive-wallet-id" title="Contributor-chosen nickname">by {idea.submitter_nickname || 'Contributor'}</span>
           <time className="archive-entry-date" dateTime={idea.timestamp}>{new Date(idea.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
       </div>
@@ -244,14 +246,29 @@ function IdeaCard({
         <div className="archive-record-panel">
           <div className="archive-record-intro">
             <span className="archive-eyebrow">Record details</span>
-            <p>Readable text is stored in the archive database. Its SHA-256 hash is recorded on Arbitrum Sepolia.</p>
+            <p>Readable text and any submitted optional context are stored in the archive database. The record hash is recorded on Arbitrum Sepolia.</p>
           </div>
           <HashVerification
             content={idea.content}
             expectedHash={idea.content_hash}
             kind="idea"
             onchainId={idea.onchain_idea_id}
+            recordVersion={idea.record_version}
+            recordContext={{
+              recordType: idea.record_type as RecordType | null | undefined,
+              sources: idea.sources,
+              method: idea.method,
+              limitations: idea.limitations,
+            }}
           />
+          {(idea.record_type || idea.sources || idea.method || idea.limitations) && (
+            <dl className="archive-record-context-display">
+              {idea.record_type && <div><dt>Record type</dt><dd>{idea.record_type}</dd></div>}
+              {idea.sources && <div><dt>Evidence or sources</dt><dd>{idea.sources}</dd></div>}
+              {idea.method && <div><dt>How it was reached</dt><dd>{idea.method}</dd></div>}
+              {idea.limitations && <div><dt>Limitations or open questions</dt><dd>{idea.limitations}</dd></div>}
+            </dl>
+          )}
           <dl className="archive-record-grid">
             <div className="archive-record-field archive-record-hash">
               <dt>Archive hash · SHA-256</dt>
@@ -303,11 +320,11 @@ function IdeaCard({
                   <code>{response.content_hash.slice(0, 12)}…</code>
                   <a href={`https://sepolia.arbiscan.io/tx/${response.transaction_hash}`} target="_blank" rel="noopener noreferrer">View transaction <span aria-hidden="true">↗</span></a>
                 </div>
-                <HashVerification
+          <HashVerification
                   content={response.content}
                   expectedHash={response.content_hash}
                   kind="response"
-                  onchainId={response.onchain_response_id}
+            onchainId={response.onchain_response_id}
                 />
               </details>
             </article>
@@ -323,4 +340,5 @@ function IdeaCard({
       )}
     </article>
   );
+
 }

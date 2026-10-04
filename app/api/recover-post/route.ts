@@ -6,11 +6,12 @@ import {
   getIdeaByTransactionHash,
   getIdeaForResponse,
   getResponseByTransactionHash,
+  contributorHasNickname,
   saveIdea,
   saveResponse,
-  contributorHasNickname,
 } from '../../../lib/server-supabase';
 import { verifyPostRecoveryTicket } from '../../../lib/post-recovery';
+import { MAX_CONTEXT_FIELD_LENGTH, MAX_RECORD_CONTENT_LENGTH, RECORD_TYPES, serializeRecordV2, type RecordContext } from '../../../lib/record-hash';
 
 export const runtime = 'nodejs';
 
@@ -37,21 +38,53 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { content, contentHash, recoveryTicket } = body;
+    const { content, contentHash, recoveryTicket, recordType, sources, method, limitations } = body;
     if (typeof content !== 'string' || typeof contentHash !== 'string' || typeof recoveryTicket !== 'string') {
       return NextResponse.json({ error: 'content, contentHash, and recoveryTicket are required' }, { status: 400 });
     }
-    if (!content.trim() || content.length > 10000) {
+    if (!content.trim() || content.length > MAX_RECORD_CONTENT_LENGTH) {
       return NextResponse.json({ error: 'Content must be between 1 and 10000 characters' }, { status: 400 });
-    }
-
-    const expectedHash = `0x${createHash('sha256').update(content, 'utf8').digest('hex')}`;
-    if (contentHash !== expectedHash) {
-      return NextResponse.json({ error: 'Content hash does not match content' }, { status: 400 });
     }
 
     const ticket = verifyPostRecoveryTicket(recoveryTicket);
     if (!ticket) return NextResponse.json({ error: 'Recovery ticket is invalid or expired' }, { status: 401 });
+
+    let normalizedContext: RecordContext = {};
+    let expectedHash: string;
+    if (ticket.kind === 'idea' && ticket.recordVersion === 2) {
+      const values: Array<[string, unknown, number]> = [
+        ['sources', sources, MAX_CONTEXT_FIELD_LENGTH], ['method', method, MAX_CONTEXT_FIELD_LENGTH], ['limitations', limitations, MAX_CONTEXT_FIELD_LENGTH],
+      ];
+      for (const [field, value, maxLength] of values) {
+        if (value !== null && value !== undefined && (typeof value !== 'string' || value.length > maxLength)) {
+          return NextResponse.json({ error: `${field} must be text of at most ${maxLength} characters` }, { status: 400 });
+        }
+      }
+      normalizedContext = {
+        recordType: recordType === '' || recordType == null ? null : recordType,
+        sources: typeof sources === 'string' && sources.trim() ? sources.trim() : null,
+        method: typeof method === 'string' && method.trim() ? method.trim() : null,
+        limitations: typeof limitations === 'string' && limitations.trim() ? limitations.trim() : null,
+      };
+      if (normalizedContext.recordType != null && !RECORD_TYPES.includes(normalizedContext.recordType)) {
+        return NextResponse.json({ error: 'Record type is not supported' }, { status: 400 });
+      }
+      if (
+        normalizedContext.recordType !== (ticket.recordType ?? null) ||
+        normalizedContext.sources !== (ticket.sources ?? null) ||
+        normalizedContext.method !== (ticket.method ?? null) ||
+        normalizedContext.limitations !== (ticket.limitations ?? null)
+      ) {
+        return NextResponse.json({ error: 'Recovery context does not match the original submission' }, { status: 403 });
+      }
+      expectedHash = `0x${createHash('sha256').update(serializeRecordV2(content, normalizedContext), 'utf8').digest('hex')}`;
+    } else {
+      expectedHash = `0x${createHash('sha256').update(content, 'utf8').digest('hex')}`;
+    }
+    if (contentHash !== expectedHash) {
+      return NextResponse.json({ error: 'Content hash does not match content and record context' }, { status: 400 });
+    }
+
     if (
       ticket.walletAddress.toLowerCase() !== walletAddress.toLowerCase() ||
       ticket.contentHash.toLowerCase() !== contentHash.toLowerCase()
@@ -64,6 +97,13 @@ export async function POST(request: NextRequest) {
       if (existing) {
         const matchesTicket = existing.content_hash.toLowerCase() === contentHash.toLowerCase() &&
           existing.content === content &&
+          (ticket.recordVersion !== 2 || (
+            existing.record_version === 2 &&
+            existing.record_type === normalizedContext.recordType &&
+            (existing.sources ?? null) === normalizedContext.sources &&
+            (existing.method ?? null) === normalizedContext.method &&
+            (existing.limitations ?? null) === normalizedContext.limitations
+          )) &&
           existing.submitter_wallet_address.toLowerCase() === ticket.walletAddress.toLowerCase() &&
           Number(existing.block_number) === ticket.blockNumber &&
           Number(existing.onchain_idea_id) === ticket.onchainId;
@@ -129,6 +169,11 @@ export async function POST(request: NextRequest) {
       await saveIdea({
         content_hash: contentHash,
         content,
+        record_version: ticket.recordVersion ?? 1,
+        record_type: normalizedContext.recordType ?? null,
+        sources: normalizedContext.sources ?? null,
+        method: normalizedContext.method ?? null,
+        limitations: normalizedContext.limitations ?? null,
         submitter_wallet_address: ticket.walletAddress,
         onchain_idea_id: ticket.onchainId,
         transaction_hash: ticket.transactionHash,
