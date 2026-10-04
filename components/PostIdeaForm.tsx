@@ -35,7 +35,9 @@ export default function PostIdeaForm({ onIdeaPosted }: { onIdeaPosted: () => voi
     
     // Check for duplicates
     try {
-      const duplicate = await checkDuplicateHash(hashHex);
+      const accessToken = await getAccessToken();
+      if (!accessToken) return;
+      const duplicate = await checkDuplicateHash(hashHex, accessToken);
       setDuplicateWarning(!!duplicate);
     } catch (err) {
       console.error('Error checking duplicate:', err);

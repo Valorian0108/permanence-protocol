@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { BackendSigner } from '../../../lib/signer';
 import { getAuthenticatedWallet } from '../../../lib/server-auth';
-import { consumePostRateLimit, saveIdea } from '../../../lib/server-supabase';
+import { consumePostRateLimit, contributorHasNickname, saveIdea } from '../../../lib/server-supabase';
 import { createPostRecoveryTicket } from '../../../lib/post-recovery';
 
 export const runtime = 'nodejs';
@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
     const walletAddress = await getAuthenticatedWallet(request);
     if (!walletAddress) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    if (!await contributorHasNickname(walletAddress)) {
+      return NextResponse.json({ error: 'Choose a nickname before contributing' }, { status: 428 });
     }
 
     const body = await request.json();

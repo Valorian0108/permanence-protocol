@@ -1,17 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
-
 export interface Idea {
   id: string;
   content_hash: string;
   content: string;
-  submitter_wallet_address: string;
+  submitter_nickname: string;
   onchain_idea_id: number | null;
   transaction_hash: string;
   block_number: number | null;
@@ -25,7 +16,7 @@ export interface Response {
   content_hash: string;
   content: string;
   response_type: string;
-  submitter_wallet_address: string;
+  submitter_nickname: string;
   onchain_response_id: number | null;
   transaction_hash: string;
   block_number: number | null;
@@ -33,63 +24,32 @@ export interface Response {
 }
 
 export async function getIdeas({ page, pageSize, query }: { page: number; pageSize: number; query: string }) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const start = (page - 1) * pageSize;
-  let request = supabase
-    .from('ideas')
-    .select('*, responses(count)', { count: 'exact' })
-    .order('timestamp', { ascending: false })
-    .range(start, start + pageSize - 1);
-
-  if (query) request = request.ilike('content', `%${query}%`);
-
-  const { data, error, count } = await request;
-
-  if (error) throw error;
-  const ideas = (data ?? []).map((idea) => {
-    const responseCount = Array.isArray(idea.responses)
-      ? Number(idea.responses[0]?.count ?? 0)
-      : 0;
-
-    const { responses: _responses, ...ideaRecord } = idea;
-    return { ...ideaRecord, response_count: responseCount };
-  });
-
-  return { ideas, total: count ?? 0 };
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize), query });
+  const response = await fetch(`/api/archive?${params.toString()}`);
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Could not load archive');
+  return result as { ideas: Idea[]; total: number };
 }
 
 export async function getResponsesByIdeaId(ideaId: string) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
-    .from('responses')
-    .select('*')
-    .eq('idea_id', ideaId)
-    .order('timestamp', { ascending: true });
-
-  if (error) throw error;
-  return data;
+  const response = await fetch(`/api/archive/responses?ideaId=${encodeURIComponent(ideaId)}`);
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Could not load responses');
+  return result.responses as Response[];
 }
 
 export async function getIdeaById(id: string) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
-    .from('ideas')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error) throw error;
-  return data;
+  const response = await fetch(`/api/archive/idea?id=${encodeURIComponent(id)}`);
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Could not load idea');
+  return result.idea as Idea;
 }
 
-export async function checkDuplicateHash(contentHash: string) {
-  if (!supabase) throw new Error('Supabase not configured');
-  const { data, error } = await supabase
-    .from('ideas')
-    .select('id')
-    .eq('content_hash', contentHash)
-    .maybeSingle();
-
-  if (error && error.code !== 'PGRST116') throw error;
-  return data;
+export async function checkDuplicateHash(contentHash: string, accessToken: string) {
+  const response = await fetch(`/api/archive/duplicate?hash=${encodeURIComponent(contentHash)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Could not check for a duplicate');
+  return result.duplicate ? { id: 'existing' } : null;
 }

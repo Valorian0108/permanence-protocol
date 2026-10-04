@@ -8,6 +8,7 @@ import {
   getResponseByTransactionHash,
   saveIdea,
   saveResponse,
+  contributorHasNickname,
 } from '../../../lib/server-supabase';
 import { verifyPostRecoveryTicket } from '../../../lib/post-recovery';
 
@@ -30,6 +31,9 @@ export async function POST(request: NextRequest) {
     const walletAddress = await getAuthenticatedWallet(request);
     if (!walletAddress) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    if (!await contributorHasNickname(walletAddress)) {
+      return NextResponse.json({ error: 'Choose a nickname before recovering a contribution' }, { status: 428 });
     }
 
     const body = await request.json();
