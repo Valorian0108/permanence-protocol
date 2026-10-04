@@ -31,7 +31,7 @@ flowchart LR
     D --> F[Compare text hash with on-chain record]
 ```
 
-The archive stores the readable text, contributor wallet attribution, transaction reference, and related metadata. The blockchain contract records the content hash and the backend signer address. The app displays the authenticated contributor's shortened wallet address as archive attribution. In this prototype, the contributor's wallet does **not** sign the on-chain transaction directly.
+The archive stores readable text, an internal wallet-to-account association, transaction references, and related metadata. Public archive views show a contributor-chosen nickname (or the neutral label “Contributor” for older entries until the account chooses one); they do not return stored wallet addresses. Nicknames are mutable and unique without case sensitivity, and older contributions display the contributor’s current nickname. The blockchain contract records the content hash and backend signer address. The contributor’s wallet does **not** sign the on-chain transaction directly. Wallet addresses can still be visible in public blockchain history, so nickname attribution is pseudonymous, not anonymous.
 
 ## What this does and does not establish
 
@@ -39,7 +39,7 @@ The archive stores the readable text, contributor wallet attribution, transactio
 
 - That specific text produces the same SHA-256 hash as a record currently readable from the Arbitrum Sepolia contract.
 - That the hash was included in a transaction on that test network at a particular point in its history.
-- Which contributor wallet the app associated with the archive entry, while the corresponding database row remains available.
+- Which nickname the account chose to display beside its archive entries, while that profile remains available.
 
 **It does not establish:**
 
@@ -54,7 +54,7 @@ The archive stores the readable text, contributor wallet attribution, transactio
 - **Public archive:** browse and search ideas without signing in.
 - **Conversations:** expand an idea to read responses marked Support, Challenge, or Evidence.
 - **Verification:** compare the archived text with its on-chain hash.
-- **Contributions:** sign in with Privy to submit ideas and responses.
+- **Contributions:** sign in with Privy, choose a public nickname, then submit ideas and responses. Nicknames are not real-name or one-person-one-account verification.
 - **Motion-aware introduction:** the opening animation respects reduced-motion preferences.
 
 ## Technology
@@ -91,7 +91,7 @@ The archive stores the readable text, contributor wallet attribution, transactio
    Copy-Item .env.example .env.local
    ```
 
-3. Configure Supabase. For a new database, apply `server/database/schema.sql`, then apply the SQL files in `server/database/migrations/` in date order. If you are using an existing project, check which migrations have already been applied before running them.
+3. Configure Supabase. For a new database, apply `server/database/schema.sql`, then apply the SQL files in `server/database/migrations/` in date order. If you are using an existing project, check which migrations have already been applied before running them. The contributor-nickname migration removes direct anonymous reads of ideas and responses; the app serves public archive data through sanitized server API routes instead.
 
 4. Add the local development origin to your Privy app's allowed origins. Restart the development server after changing environment variables.
 
@@ -103,7 +103,7 @@ The archive stores the readable text, contributor wallet attribution, transactio
 
    Open [http://localhost:3000](http://localhost:3000).
 
-The public archive needs the Supabase URL and anon key. Posting and verification also need the appropriate server-side Privy, Supabase service-role, and Arbitrum Sepolia settings. A server-side signer needs Sepolia test ETH to submit transactions. Never use a wallet containing valuable mainnet assets as the testnet signer.
+The archive API and posting need the Supabase URL and server-side service-role key. Posting and verification also need server-side Privy and Arbitrum Sepolia settings. A server-side signer needs Sepolia test ETH to submit transactions. Never use a wallet containing valuable mainnet assets as the testnet signer. The anon key is no longer used by the application’s public archive reads.
 
 Useful checks:
 
@@ -119,13 +119,13 @@ Use `.env.example` as the variable-name reference. Keep secret values in `.env.l
 | Variable | Used for | Secret? |
 | --- | --- | --- |
 | `NEXT_PUBLIC_PRIVY_APP_ID` | Privy client configuration | No |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase client URL | No |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public archive reads | No, protect data with RLS |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL, also used by server routes | No |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Not currently used by app reads | No |
 | `PRIVY_APP_ID` | Server-side Privy verification | Treat as private configuration |
 | `PRIVY_APP_SECRET` | Server-side Privy verification | Yes |
 | `PRIVY_VERIFICATION_KEY` | Server-side token verification | Yes |
 | `SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_URL` | Server-side database connection | No |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side archive writes | **Yes, highly privileged** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side profile, archive reads and writes | **Yes, highly privileged** |
 | `PRIVATE_KEY` | Testnet transaction signer | **Yes, never expose to the browser** |
 | `ARBITRUM_SEPOLIA_RPC_URL` | Arbitrum Sepolia RPC access | Keep provider credentials private |
 | `ETHERSCAN_API_KEY` | Optional contract verification tooling | Yes |
@@ -134,7 +134,7 @@ Use `.env.example` as the variable-name reference. Keep secret values in `.env.l
 
 Readable ideas and responses live in Supabase. Keep independent backups and periodically test restoring one. Database recovery can restore readable content from a backup; the on-chain hash by itself cannot reconstruct it. Review your Supabase plan and backup settings because backup retention and recovery options vary.
 
-Public archive entries should be treated as public. Before inviting contributors, explain what data is stored, how wallet attribution is displayed, and what the blockchain record means. Do not promise that a post can be erased from the network or recovered if every copy of its text is lost.
+Public archive entries should be treated as public. Before inviting contributors, explain what data is stored, that nicknames are mutable pseudonyms rather than verified identities, and what the blockchain record means. The application’s public archive API omits wallet-address columns; however, this migration cannot retract wallet data that may already have been read or copied while the old public Supabase policies were active. Do not promise that a post can be erased from the network or recovered if every copy of its text is lost.
 
 ## Contract
 

@@ -7,15 +7,20 @@ import PostIdeaForm from '../components/PostIdeaForm';
 import LandingAnimation from '../components/LandingAnimation';
 
 export default function PrivyApp() {
-  const { ready, authenticated, logout, user } = usePrivy();
+  const { ready, authenticated, logout, user, getAccessToken } = usePrivy();
   const { login } = useLogin({
     onError: (error) => {
       console.error('Login error:', error);
     }
   });
   const [showLanding, setShowLanding] = useState(true);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [privyError, setPrivyError] = useState<string | null>(null);
+  const [nickname, setNickname] = useState('');
+  const [nicknameInput, setNicknameInput] = useState('');
+  const [nicknameCustomized, setNicknameCustomized] = useState(false);
+  const [nicknameLoading, setNicknameLoading] = useState(false);
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const [nicknameEditing, setNicknameEditing] = useState(false);
+  const [nicknameError, setNicknameError] = useState('');
   const [mounted, setMounted] = useState(false);
   const [archiveRevision, setArchiveRevision] = useState(0);
 
@@ -27,55 +32,73 @@ export default function PrivyApp() {
     setShowLanding(false);
   };
 
-  // Get wallet address when authenticated
   useEffect(() => {
-    if (authenticated && user) {
-      const wallet = user.linkedAccounts.find((account: any) => 
-        account.type === 'wallet' || account.type === 'smart_wallet'
-      ) as any;
-      if (wallet && wallet.address) {
-        setWalletAddress(wallet.address);
-      }
+    if (!authenticated || !user) {
+      setNickname('');
+      setNicknameCustomized(false);
+      setNicknameEditing(false);
+      return;
     }
-  }, [authenticated, user]);
+
+    let active = true;
+    setNicknameLoading(true);
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token) throw new Error('Your session expired. Please sign in again.');
+        const response = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not load your nickname.');
+        if (active) {
+          setNickname(result.nickname ?? '');
+          setNicknameInput(result.nickname ?? '');
+          setNicknameCustomized(Boolean(result.nicknameCustomized));
+          setNicknameEditing(!result.nicknameCustomized);
+        }
+      } catch (error) {
+        if (active) {
+          setNicknameError(error instanceof Error ? error.message : 'Could not load your nickname.');
+          setNicknameEditing(true);
+        }
+      } finally {
+        if (active) setNicknameLoading(false);
+      }
+    })();
+
+    return () => { active = false; };
+  }, [authenticated, user, getAccessToken]);
+
+  const saveNickname = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setNicknameSaving(true);
+    setNicknameError('');
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error('Your session expired. Please sign in again.');
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ nickname: nicknameInput }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not save your nickname.');
+      setNickname(result.nickname);
+      setNicknameInput(result.nickname);
+      setNicknameCustomized(true);
+      setNicknameEditing(false);
+      setArchiveRevision((revision) => revision + 1);
+    } catch (error) {
+      setNicknameError(error instanceof Error ? error.message : 'Could not save your nickname.');
+    } finally {
+      setNicknameSaving(false);
+    }
+  };
 
   // Show loading while Privy initializes or not mounted
   if (!mounted || !ready) {
     return (
       <div className="min-h-screen archive-paper flex items-center justify-center">
         <div className="archive-ink-lighter">Loading...</div>
-      </div>
-    );
-  }
-
-  // Show error if Privy failed
-  if (privyError) {
-    return (
-      <div className="min-h-screen archive-paper">
-      <header className="archive-header">
-          <div className="archive-shell archive-header-inner">
-            <h1 className="text-2xl font-semibold archive-display archive-ink">
-              Permanence Protocol
-            </h1>
-          </div>
-        </header>
-        <main className="archive-shell archive-main">
-          <div className="text-center py-16">
-            <h2 className="text-3xl archive-display archive-ink mb-4">
-              Authentication Error
-            </h2>
-            <p className="text-lg archive-ink-light mb-8">
-              {privyError}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 text-white text-base archive-display transition-colors"
-              style={{ backgroundColor: 'var(--color-ink)' }}
-            >
-              Retry
-            </button>
-          </div>
-        </main>
       </div>
     );
   }
@@ -104,7 +127,8 @@ export default function PrivyApp() {
               </button>
             ) : (
               <div className="archive-account">
-                <span className="archive-account-wallet archive-mono">{walletAddress?.slice(0, 6)}…{walletAddress?.slice(-4)}</span>
+                <span className="archive-account-wallet">{nickname || (nicknameLoading ? 'Loading nickname…' : 'Choose a nickname')}</span>
+                {nickname && <button type="button" onClick={() => { setNicknameInput(nickname); setNicknameEditing(true); }} className="archive-text-button">Edit</button>}
                 <button
                   onClick={logout}
                   className="archive-button archive-button-outline"
@@ -138,13 +162,42 @@ export default function PrivyApp() {
           <span className="archive-network archive-mono">TEST NETWORK</span>
         </section>
 
-        {authenticated && (
+        {authenticated && nicknameEditing && (
+          <section className="archive-compose" aria-label="Choose your public nickname">
+            <div>
+              <p className="archive-eyebrow">Your public name</p>
+              <h2 className="archive-display archive-ink">Choose a nickname</h2>
+              <p className="archive-form-intro">Your nickname appears beside your posts and responses. No real name is required. It can be changed later; older contributions will show your current nickname. Your wallet address is omitted from the app’s public archive API and display, but may be visible in public blockchain history.</p>
+              <form onSubmit={saveNickname} className="archive-nickname-form">
+                <label htmlFor="contributor-nickname">Nickname</label>
+                <input id="contributor-nickname" value={nicknameInput} onChange={(event) => setNicknameInput(event.target.value)} minLength={3} maxLength={24} autoComplete="nickname" required disabled={nicknameSaving || nicknameLoading} placeholder="3–24 characters" />
+                {nicknameError && <p role="alert" className="archive-form-error">{nicknameError}</p>}
+                <button type="submit" className="archive-button archive-button-solid" disabled={nicknameSaving || nicknameLoading}>{nicknameSaving ? 'Saving…' : nicknameCustomized ? 'Save nickname' : 'Choose nickname'}</button>
+                {nicknameCustomized && <button type="button" className="archive-text-button" onClick={() => { setNicknameInput(nickname); setNicknameEditing(false); }}>Cancel</button>}
+              </form>
+              <p className="archive-subtle">A nickname distinguishes an account; it does not verify a real identity or one person per account.</p>
+            </div>
+          </section>
+        )}
+
+        {authenticated && nickname && !nicknameEditing && (
           <section className="archive-compose" aria-label="Contribute an idea">
             <PostIdeaForm onIdeaPosted={() => setArchiveRevision((revision) => revision + 1)} />
           </section>
         )}
 
-        <IdeaFeed key={archiveRevision} canPost={authenticated} onSignIn={() => login()} />
+        <IdeaFeed
+          key={archiveRevision}
+          canPost={authenticated && Boolean(nickname) && !nicknameEditing}
+          onSignIn={() => {
+            if (authenticated) {
+              setNicknameInput(nickname);
+              setNicknameEditing(true);
+            } else {
+              login();
+            }
+          }}
+        />
 
         <footer className="archive-footer">
           <p>PERMANENCE PROTOCOL · PUBLIC ARCHIVE</p>

@@ -421,6 +421,45 @@ body {
   white-space: nowrap;
 }
 
+.archive-nickname-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: 620px;
+  margin: 18px 0 10px;
+}
+
+.archive-nickname-form label {
+  flex-basis: 100%;
+  color: var(--color-ink-light);
+  font-size: 12px;
+}
+
+.archive-nickname-form input {
+  flex: 1 1 240px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  background: var(--color-reading-surface);
+  font: inherit;
+  font-size: 13px;
+}
+
+.archive-nickname-form input:focus-visible {
+  outline: 2px solid var(--color-reading-focus);
+  outline-offset: 2px;
+}
+
+.archive-form-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-reading-danger);
+  font-size: 12px;
+}
+
 .archive-button {
   display: inline-flex;
   min-height: 40px;

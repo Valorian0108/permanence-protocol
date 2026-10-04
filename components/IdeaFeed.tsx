@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getIdeas, getResponsesByIdeaId, Idea, Response } from '../lib/supabase';
+import { getIdeas, getResponsesByIdeaId } from '../lib/supabase';
+import type { Idea, Response } from '../lib/supabase';
 import PostResponseForm from './PostResponseForm';
 import HashVerification from './HashVerification';
 
@@ -13,7 +14,7 @@ export default function IdeaFeed({
   onSignIn: () => void;
 }) {
   const PAGE_SIZE = 25;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const archiveEnabled = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [totalIdeas, setTotalIdeas] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -42,9 +43,9 @@ export default function IdeaFeed({
   }, [page, searchQuery]);
 
   useEffect(() => {
-    if (supabaseUrl) void fetchIdeas();
+    if (archiveEnabled) void fetchIdeas();
     else setLoading(false);
-  }, [fetchIdeas, supabaseUrl]);
+  }, [fetchIdeas, archiveEnabled]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -67,7 +68,7 @@ export default function IdeaFeed({
     document.getElementById('archive-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  if (!supabaseUrl) return null;
+  if (!archiveEnabled) return null;
 
   return (
     <section className="archive-feed" id="archive" aria-labelledby="archive-title">
@@ -122,7 +123,7 @@ export default function IdeaFeed({
             </div>
           )}
           {filteredIdeas.length > 0 && (
-            <div className="archive-entries">
+          <div className="archive-entries">
               {filteredIdeas.map((idea, index) => (
                 <IdeaCard
                   key={idea.id}
@@ -166,7 +167,6 @@ export default function IdeaFeed({
     </section>
   );
 }
-
 function IdeaCard({
   idea,
   index,
@@ -211,13 +211,11 @@ function IdeaCard({
     setShowResponseForm(false);
   };
   const responseCount = responsesLoaded ? responses.length : idea.response_count ?? 0;
-  const shortWallet = formatWalletId(idea.submitter_wallet_address);
-
   return (
       <article className="archive-entry">
         <div className="archive-entry-meta">
           <span className="archive-entry-number archive-mono">{String(index + 1).padStart(2, '0')}</span>
-          <span className="archive-wallet-id archive-mono" aria-label={`Posted by wallet ${shortWallet}`} title="Pseudonymous wallet identifier">by {shortWallet}</span>
+          <span className="archive-wallet-id" title="Contributor-chosen nickname">by {idea.submitter_nickname || 'Contributor'}</span>
           <time className="archive-entry-date" dateTime={idea.timestamp}>{new Date(idea.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</time>
       </div>
 
@@ -295,7 +293,7 @@ function IdeaCard({
             <article key={response.id} className="archive-response">
               <div className="archive-response-meta">
                 <span className={`archive-response-type archive-response-${response.response_type.toLowerCase()}`}>{response.response_type}</span>
-                <span className="archive-wallet-id archive-mono" aria-label={`Posted by wallet ${formatWalletId(response.submitter_wallet_address)}`} title="Pseudonymous wallet identifier">by {formatWalletId(response.submitter_wallet_address)}</span>
+                <span className="archive-wallet-id" title="Contributor-chosen nickname">by {response.submitter_nickname || 'Contributor'}</span>
                 <time dateTime={response.timestamp}>{new Date(response.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</time>
               </div>
               <p>{response.content}</p>
@@ -325,9 +323,4 @@ function IdeaCard({
       )}
     </article>
   );
-}
-
-function formatWalletId(address: string) {
-  if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
