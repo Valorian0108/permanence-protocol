@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
   const hash = request.nextUrl.searchParams.get('hash') ?? '';
   if (!/^0x[0-9a-f]{64}$/i.test(hash)) return NextResponse.json({ error: 'A valid SHA-256 hash is required' }, { status: 400 });
   try {
-    return NextResponse.json({ duplicate: await hasDuplicateIdeaHash(hash) });
+    return NextResponse.json({ duplicate: await hasDuplicateIdeaHash(hash) }, {
+      headers: { 'Cache-Control': 'private, no-store, max-age=0' },
+    });
   } catch (error) {
     console.error('Could not check duplicate record:', error);
     return NextResponse.json({ error: 'Could not check for duplicates' }, { status: 500 });

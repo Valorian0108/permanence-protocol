@@ -43,7 +43,7 @@ export async function saveContributorNickname(walletAddress: string, nickname: s
 export async function getPublicIdeas({ page, pageSize, query }: { page: number; pageSize: number; query: string }) {
   let request = getServerSupabase()
     .from('ideas')
-    .select('*, responses(count)', { count: 'exact' })
+    .select('id, content_hash, content, record_version, record_type, sources, method, limitations, submitter_wallet_address, onchain_idea_id, transaction_hash, block_number, timestamp, responses(count)', { count: 'exact' })
     .order('timestamp', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
 
@@ -63,6 +63,11 @@ export async function getPublicIdeas({ page, pageSize, query }: { page: number; 
       id: idea.id,
       content_hash: idea.content_hash,
       content: idea.content,
+      record_version: idea.record_version,
+      record_type: idea.record_type,
+      sources: idea.sources,
+      method: idea.method,
+      limitations: idea.limitations,
       submitter_nickname: nicknameByWallet.get(String(idea.submitter_wallet_address).toLowerCase()) ?? 'Contributor',
       onchain_idea_id: idea.onchain_idea_id,
       transaction_hash: idea.transaction_hash,
@@ -105,7 +110,7 @@ export async function getPublicResponses(ideaId: string) {
 export async function getPublicIdea(id: string) {
   const { data, error } = await getServerSupabase()
     .from('ideas')
-    .select('id, content_hash, content, submitter_wallet_address, onchain_idea_id, transaction_hash, block_number, timestamp')
+    .select('id, content_hash, content, record_version, record_type, sources, method, limitations, submitter_wallet_address, onchain_idea_id, transaction_hash, block_number, timestamp')
     .eq('id', id)
     .single();
 
@@ -115,6 +120,11 @@ export async function getPublicIdea(id: string) {
     id: data.id,
     content_hash: data.content_hash,
     content: data.content,
+    record_version: data.record_version,
+    record_type: data.record_type,
+    sources: data.sources,
+    method: data.method,
+    limitations: data.limitations,
     submitter_nickname: nickname?.nickname ?? 'Contributor',
     onchain_idea_id: data.onchain_idea_id,
     transaction_hash: data.transaction_hash,
@@ -166,6 +176,11 @@ export async function consumePostRateLimit(walletAddress: string, limit = 5) {
 export async function saveIdea(ideaData: {
   content_hash: string;
   content: string;
+  record_version?: number;
+  record_type?: string | null;
+  sources?: string | null;
+  method?: string | null;
+  limitations?: string | null;
   submitter_wallet_address: string;
   onchain_idea_id: number;
   transaction_hash: string;
@@ -184,7 +199,7 @@ export async function saveIdea(ideaData: {
 export async function getIdeaByTransactionHash(transactionHash: string) {
   const { data, error } = await getServerSupabase()
     .from('ideas')
-    .select('content_hash, content, submitter_wallet_address, onchain_idea_id, transaction_hash, block_number')
+    .select('content_hash, content, record_version, record_type, sources, method, limitations, submitter_wallet_address, onchain_idea_id, transaction_hash, block_number')
     .eq('transaction_hash', transactionHash)
     .maybeSingle();
 

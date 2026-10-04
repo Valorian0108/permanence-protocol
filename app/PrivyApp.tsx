@@ -112,12 +112,12 @@ export default function PrivyApp() {
             <img className="archive-brand-mark" src="/permanence-mark.svg" alt="" aria-hidden="true" />
             <span>
               <span className="archive-brand-name">Permanence Protocol</span>
-              <span className="archive-brand-caption">An archive for ideas</span>
+              <span className="archive-brand-caption">Records of thinking &amp; work</span>
             </span>
           </a>
           <nav className="archive-nav" aria-label="Main navigation">
             <a href="#archive">The archive</a>
-            <a href="#why-share">Why preserve an idea?</a>
+            <a href="#why-share">Why preserve a record?</a>
             {!authenticated ? (
               <button
                 onClick={() => login()}
@@ -146,13 +146,13 @@ export default function PrivyApp() {
         <section className="archive-intro" aria-labelledby="archive-intro-title">
           <div className="archive-intro-copy">
             <p className="archive-eyebrow">A public reading room</p>
-            <h1 id="archive-intro-title">An idea is a beginning.<br /><span>Keep the first words.</span></h1>
-            <p className="archive-lede">Read ideas as they were written. Follow the responses. And, when you want to, check the record for yourself.</p>
+            <h1 id="archive-intro-title">Work begins somewhere.<br /><span>Keep a record of it.</span></h1>
+            <p className="archive-lede">Preserve a question, observation, hypothesis, finding, or other work. Follow the responses. And, when you want to, check the record for yourself.</p>
           </div>
           <aside className="archive-principle" id="why-share">
-            <p className="archive-eyebrow">Why preserve an idea?</p>
-            <h3>An idea doesn’t have to be proven to be worth preserving.</h3>
-            <p>Record a question, observation, hypothesis, proposal, or tested result. Others can respond and build on it. The archive preserves what was said; it doesn’t certify that it’s true.</p>
+            <p className="archive-eyebrow">Why preserve a record?</p>
+            <h3>A record doesn’t have to be complete or proven to be worth preserving.</h3>
+            <p>Record a question, observation, hypothesis, finding, proposal, or other work. Add context where it helps. Others can respond and build on it. The archive preserves the record; it doesn’t certify its claims.</p>
           </aside>
         </section>
 
@@ -167,7 +167,7 @@ export default function PrivyApp() {
             <div>
               <p className="archive-eyebrow">Your public name</p>
               <h2 className="archive-display archive-ink">Choose a nickname</h2>
-              <p className="archive-form-intro">Your nickname appears beside your posts and responses. No real name is required. It can be changed later; older contributions will show your current nickname. Your wallet address is omitted from the app’s public archive API and display, but may be visible in public blockchain history.</p>
+              <p className="archive-form-intro">Your nickname appears beside your records and responses. No real name is required. It can be changed later; older contributions will show your current nickname. Your wallet address is omitted from the app’s public archive API and display, but may be visible in public blockchain history.</p>
               <form onSubmit={saveNickname} className="archive-nickname-form">
                 <label htmlFor="contributor-nickname">Nickname</label>
                 <input id="contributor-nickname" value={nicknameInput} onChange={(event) => setNicknameInput(event.target.value)} minLength={3} maxLength={24} autoComplete="nickname" required disabled={nicknameSaving || nicknameLoading} placeholder="3–24 characters" />
@@ -181,7 +181,7 @@ export default function PrivyApp() {
         )}
 
         {authenticated && nickname && !nicknameEditing && (
-          <section className="archive-compose" aria-label="Contribute an idea">
+          <section className="archive-compose" aria-label="Contribute a record">
             <PostIdeaForm onIdeaPosted={() => setArchiveRevision((revision) => revision + 1)} />
           </section>
         )}

@@ -1,7 +1,14 @@
+import type { RecordContext } from './record-hash';
+
 // Use relative path for same-origin API calls (works in both dev and production)
 const API_BASE = '';
 
-export async function postIdea(content: string, contentHash: string, accessToken: string) {
+export async function postIdea(
+  content: string,
+  contentHash: string,
+  recordContext: RecordContext,
+  accessToken: string,
+) {
   try {
     const response = await fetch(`${API_BASE}/api/post-idea`, {
       method: 'POST',
@@ -9,7 +16,7 @@ export async function postIdea(content: string, contentHash: string, accessToken
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ content, contentHash }),
+      body: JSON.stringify({ content, contentHash, ...recordContext, recordVersion: 2 }),
     });
 
     const data = await response.json();

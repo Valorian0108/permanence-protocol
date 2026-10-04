@@ -1,22 +1,22 @@
 # Permanence Protocol
 
-### An archive for ideas, questions, and the conversations they begin.
+### An archive for records of thinking and work.
 
-Permanence Protocol is an experimental public reading room. Contributors can preserve an idea and invite others to support it, challenge it, or add evidence. Readers can inspect the archive without signing in.
+Permanence Protocol is an experimental public reading room. Contributors can preserve early questions, observations, hypotheses, findings, and other work, then invite others to support, challenge, or add evidence. Readers can inspect the archive without signing in.
 
 > **Prototype status:** This project currently records content hashes on **Arbitrum Sepolia**, a test network. Readable text is stored in Supabase. This is not a guarantee of permanent availability, authorship, truth, or priority.
 
 ## Why I designed this
 
-I wanted to explore a simple question: what if an idea could leave a record that people can return to, check, and build on later?
+I wanted to explore a simple question: what if records of thinking and work could be returned to, checked, and built on later?
 
-Online posts can be difficult to find again, and a claim about who said something first can be difficult to verify. Permanence Protocol is my experiment in keeping an idea together with a time-stamped integrity check and a public conversation around it. An idea does not have to be proven to be worth preserving. The archive records what was submitted; it does not decide whether it is true.
+Online posts can be difficult to find again, and a claim about who said something first can be difficult to verify. Permanence Protocol is my experiment in keeping a record together with a time-stamped integrity check and a public conversation around it. A contribution does not have to be complete or proven to be worth preserving. The archive records what was submitted; it does not decide whether it is true.
 
-This is an early prototype, not a solution to priority or authorship disputes. The chain can help check whether recovered text matches a recorded hash, but it cannot recreate missing text or prove that a contributor was the first person to think of an idea. I built this to explore the possibility, and to learn what a useful, honest archive needs to become.
+This is an early prototype, not a solution to priority or authorship disputes. The chain can help check whether a recovered record matches a recorded hash, but it cannot recreate missing text or prove who authored it or who thought of it first. I built this to explore the possibility, and to learn what a useful, honest archive needs to become.
 
 ## Why Arbitrum
 
-I had been wanting to build something in the Arbitrum ecosystem and get hands-on experience with its technology. Permanence Protocol gave me a practical reason to do that: recording an idea's hash on-chain and seeing how quickly the record can be confirmed. Arbitrum's speed made it feel like a natural fit for a project where each post and response creates a small record.
+I had been wanting to build something in the Arbitrum ecosystem and get hands-on experience with its technology. Permanence Protocol gave me a practical reason to do that: recording a record's hash on-chain and seeing how quickly it can be confirmed. Arbitrum's speed made it feel like a natural fit for a project where each post and response creates a small record.
 
 The current app is deployed on Arbitrum Sepolia, so this is a testnet prototype, not a production deployment or a claim of guaranteed permanence. The project could be adapted to other networks, but Arbitrum is where I chose to build and test it.
 
@@ -24,44 +24,48 @@ The current app is deployed on Arbitrum Sepolia, so this is a testnet prototype,
 
 ```mermaid
 flowchart LR
-    A[Contributor writes an idea] --> B[Readable text is saved in Supabase]
-    A --> C[App computes a SHA-256 hash]
+    A[Contributor writes a record] --> B[Readable text and optional context are saved in Supabase]
+    A --> C[App computes a versioned SHA-256 hash]
     C --> D[Backend signer records the hash on Arbitrum Sepolia]
     B --> E[Public Reading Room]
     D --> F[Compare text hash with on-chain record]
 ```
 
-The archive stores readable text, an internal wallet-to-account association, transaction references, and related metadata. Public archive views show a contributor-chosen nickname (or the neutral label “Contributor” for older entries until the account chooses one); they do not return stored wallet addresses. Nicknames are mutable and unique without case sensitivity, and older contributions display the contributor’s current nickname. The blockchain contract records the content hash and backend signer address. The contributor’s wallet does **not** sign the on-chain transaction directly. Wallet addresses can still be visible in public blockchain history, so nickname attribution is pseudonymous, not anonymous.
+The archive stores readable text, a private wallet-to-nickname mapping, transaction references, and related record metadata. The public archive API and app display the contributor-chosen nickname, never the wallet address. The wallet is retained privately for authentication and rate limiting. The blockchain contract records the content hash and backend signer address; in this prototype, the contributor's wallet does **not** sign the on-chain transaction directly. Nicknames are pseudonyms, not verified real identities or one-person-one-account credentials. Wallet activity may still be visible in public blockchain history.
+
+Top-level records may optionally include a type, sources or evidence, method, and limitations or open questions. No context field is required. New records use a versioned canonical serialization so the on-chain hash covers the main text and any optional context. Existing version 1 entries and all Support, Challenge, or Evidence responses keep their original text-only hash format and remain verifiable.
 
 ## What this does and does not establish
 
 **It can help establish:**
 
-- That specific text produces the same SHA-256 hash as a record currently readable from the Arbitrum Sepolia contract.
+- That a record's text and, for new version 2 entries, its optional context produce the same SHA-256 hash as a record currently readable from the Arbitrum Sepolia contract.
 - That the hash was included in a transaction on that test network at a particular point in its history.
-- Which nickname the account chose to display beside its archive entries, while that profile remains available.
+- That the app privately associates an account wallet with an archive entry, while the corresponding database row remains available.
 
 **It does not establish:**
 
-- The truth, quality, or originality of an idea.
+- The truth, quality, or originality of a record.
 - A contributor's real-world identity, or independent proof that their wallet authored the exact text.
-- That someone was the first person anywhere to write or think of the idea.
+- That someone was the first person anywhere to write or develop the recorded work.
 - Recovery of readable text from a hash if the text and all copies or backups are lost.
 - Guaranteed long-term availability. Arbitrum Sepolia is a test network, and the readable archive currently depends on Supabase and its backups.
 
 ## Explore the project
 
-- **Public archive:** browse and search ideas without signing in.
-- **Conversations:** expand an idea to read responses marked Support, Challenge, or Evidence.
-- **Verification:** compare the archived text with its on-chain hash.
-- **Contributions:** sign in with Privy, choose a public nickname, then submit ideas and responses. Nicknames are not real-name or one-person-one-account verification.
+- **Public archive:** browse and search records without signing in.
+- **Conversations:** expand a record to read responses marked Support, Challenge, or Evidence.
+- **Verification:** compare the archived record with its on-chain hash.
+- **Contributions:** sign in with Privy, choose a nickname, and submit records or responses.
+- **Flexible records:** optionally label a record and add sources, method, or limitations. These details are never required.
+- **Pseudonymous attribution:** choose and later change a unique nickname. Older entries display the account's current nickname; this does not provide anonymity or verify real-world identity.
 - **Motion-aware introduction:** the opening animation respects reduced-motion preferences.
 
 ## Technology
 
 - Next.js 14, React 18, and TypeScript
 - Supabase Postgres for readable archive data
-- Privy for sign-in and wallet attribution
+- Privy for sign-in and private account authentication
 - Solidity and ethers.js for the Arbitrum Sepolia contract integration
 - GSAP for the introduction animation
 
@@ -91,7 +95,7 @@ The archive stores readable text, an internal wallet-to-account association, tra
    Copy-Item .env.example .env.local
    ```
 
-3. Configure Supabase. For a new database, apply `server/database/schema.sql`, then apply the SQL files in `server/database/migrations/` in date order. If you are using an existing project, check which migrations have already been applied before running them. The contributor-nickname migration removes direct anonymous reads of ideas and responses; the app serves public archive data through sanitized server API routes instead.
+3. Configure Supabase. For a new database, apply `server/database/schema.sql`, then apply the SQL files in `server/database/migrations/` in date order. If you are using an existing project, check which migrations have already been applied before running them. The flexible-record feature requires `20261003_flexible_record_context.sql`; pseudonymous attribution and server-only archive reads require `20261004_contributor_nicknames.sql`.
 
 4. Add the local development origin to your Privy app's allowed origins. Restart the development server after changing environment variables.
 
@@ -103,7 +107,7 @@ The archive stores readable text, an internal wallet-to-account association, tra
 
    Open [http://localhost:3000](http://localhost:3000).
 
-The archive API and posting need the Supabase URL and server-side service-role key. Posting and verification also need server-side Privy and Arbitrum Sepolia settings. A server-side signer needs Sepolia test ETH to submit transactions. Never use a wallet containing valuable mainnet assets as the testnet signer. The anon key is no longer used by the application’s public archive reads.
+The public archive needs the Supabase URL to enable the client UI; all archive data reads run through server API routes using `SUPABASE_SERVICE_ROLE_KEY`, so the anon key is not used for archive reads. Posting and verification also need the appropriate server-side Privy and Arbitrum Sepolia settings. A server-side signer needs Sepolia test ETH to submit transactions. Never use a wallet containing valuable mainnet assets as the testnet signer.
 
 Useful checks:
 
@@ -119,22 +123,21 @@ Use `.env.example` as the variable-name reference. Keep secret values in `.env.l
 | Variable | Used for | Secret? |
 | --- | --- | --- |
 | `NEXT_PUBLIC_PRIVY_APP_ID` | Privy client configuration | No |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL, also used by server routes | No |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Not currently used by app reads | No |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase client URL | No |
 | `PRIVY_APP_ID` | Server-side Privy verification | Treat as private configuration |
 | `PRIVY_APP_SECRET` | Server-side Privy verification | Yes |
 | `PRIVY_VERIFICATION_KEY` | Server-side token verification | Yes |
 | `SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_URL` | Server-side database connection | No |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side profile, archive reads and writes | **Yes, highly privileged** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side archive writes | **Yes, highly privileged** |
 | `PRIVATE_KEY` | Testnet transaction signer | **Yes, never expose to the browser** |
 | `ARBITRUM_SEPOLIA_RPC_URL` | Arbitrum Sepolia RPC access | Keep provider credentials private |
 | `ETHERSCAN_API_KEY` | Optional contract verification tooling | Yes |
 
 ## Database care
 
-Readable ideas and responses live in Supabase. Keep independent backups and periodically test restoring one. Database recovery can restore readable content from a backup; the on-chain hash by itself cannot reconstruct it. Review your Supabase plan and backup settings because backup retention and recovery options vary.
+Readable records and responses live in Supabase, along with private wallet identifiers and nickname profiles. Keep independent backups and periodically test restoring one. Database recovery can restore readable content from a backup; the on-chain hash by itself cannot reconstruct it. Review your Supabase plan and backup settings because backup retention and recovery options vary.
 
-Public archive entries should be treated as public. Before inviting contributors, explain what data is stored, that nicknames are mutable pseudonyms rather than verified identities, and what the blockchain record means. The application’s public archive API omits wallet-address columns; however, this migration cannot retract wallet data that may already have been read or copied while the old public Supabase policies were active. Do not promise that a post can be erased from the network or recovered if every copy of its text is lost.
+Public archive entries should be treated as public. Before inviting contributors, explain what data is stored, that the app displays nicknames instead of wallet addresses, and that nicknames do not hide public blockchain activity. Do not promise that a post can be erased from the network or recovered if every copy of its text is lost. Previously available wallet data cannot be recalled.
 
 ## Contract
 

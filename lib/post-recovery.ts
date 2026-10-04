@@ -11,6 +11,11 @@ export type PostRecoveryPayload = {
   ideaRecordId?: string;
   onchainIdeaId?: number;
   responseType?: number;
+  recordVersion?: 2;
+  recordType?: string | null;
+  sources?: string | null;
+  method?: string | null;
+  limitations?: string | null;
   expiresAt: number;
 };
 
@@ -76,6 +81,7 @@ export function verifyPostRecoveryTicket(ticket: string): PostRecoveryPayload | 
       !Number.isSafeInteger(payload.onchainIdeaId) ||
       ![0, 1, 2].includes(payload.responseType ?? -1)
     )) return null;
+    if (payload.kind === 'idea' && payload.recordVersion !== undefined && payload.recordVersion !== 2) return null;
     return payload;
   } catch {
     return null;

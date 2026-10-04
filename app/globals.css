@@ -645,6 +645,71 @@ body {
   line-height: 1.65;
 }
 
+.archive-record-context,
+.archive-context-fields {
+  display: grid;
+  gap: 9px;
+}
+
+.archive-record-context > label,
+.archive-context-fields > label {
+  color: var(--color-ink-light);
+  font-size: 12px;
+}
+
+.archive-optional-label {
+  margin-left: 5px;
+  color: var(--color-ink-lighter);
+  font: 9px/1.2 var(--font-mono);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.archive-context-help {
+  margin: 0;
+  color: var(--color-ink-lighter);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.archive-context-fields textarea {
+  min-height: 72px;
+  padding: 11px;
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  font: 12px/1.6 var(--font-body);
+  resize: vertical;
+}
+
+.archive-context-fields textarea:focus-visible,
+.archive-record-context select:focus-visible {
+  outline: 2px solid var(--color-reading-focus);
+  outline-offset: 2px;
+}
+
+.archive-record-context-display {
+  display: grid;
+  gap: 12px;
+  margin: 17px 0 0;
+  padding-top: 15px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.archive-record-context-display dt {
+  margin-bottom: 4px;
+  color: var(--color-ink-lighter);
+  font-size: 10px;
+}
+
+.archive-record-context-display dd {
+  margin: 0;
+  color: var(--color-ink-light);
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .archive-compose label {
   color: var(--color-ink-light);
   font-size: 12px;
@@ -901,6 +966,14 @@ body {
   margin-bottom: 15px;
   color: var(--color-ink-lighter);
   font-size: 10px;
+}
+
+.archive-record-type-label {
+  padding: 2px 6px;
+  border: 1px solid var(--color-border);
+  color: var(--color-reading-accent);
+  font: 9px/1.4 var(--font-mono);
+  text-transform: uppercase;
 }
 
 .archive-entry-number {

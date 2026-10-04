@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
     const wallet = await getAuthenticatedWallet(request);
     if (!wallet) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     const profile = await getContributorNickname(wallet);
-    return NextResponse.json({ nickname: profile?.nickname ?? null, nicknameCustomized: profile?.nickname_customized ?? false });
+    return NextResponse.json(
+      { nickname: profile?.nickname ?? null, nicknameCustomized: profile?.nickname_customized ?? false },
+      { headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
+    );
   } catch (error) {
     console.error('Could not load contributor profile:', error);
     return NextResponse.json({ error: 'Could not load your contributor profile' }, { status: 500 });
@@ -28,7 +31,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const profile = await saveContributorNickname(wallet, nickname);
-    return NextResponse.json({ nickname: profile.nickname, nicknameCustomized: profile.nickname_customized });
+    return NextResponse.json(
+      { nickname: profile.nickname, nicknameCustomized: profile.nickname_customized },
+      { headers: { 'Cache-Control': 'private, no-store, max-age=0' } },
+    );
   } catch (error) {
     const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined;
     if (code === '23505') return NextResponse.json({ error: 'That nickname is already in use. Try another.' }, { status: 409 });

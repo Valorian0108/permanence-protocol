@@ -12,7 +12,7 @@ const introduction = [
   {
     eyebrow: 'THE READING ROOM',
     title: <>Keep the words<br />as they were written.</>,
-    detail: 'Read ideas. Follow the conversation. Check the record.',
+    detail: 'Read records. Follow the conversation. Check what was preserved.',
   },
   {
     eyebrow: 'A PUBLIC ARCHIVE',
